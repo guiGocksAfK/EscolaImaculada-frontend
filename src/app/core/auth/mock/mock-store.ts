@@ -3,6 +3,7 @@ import { Aluno } from '../../models/aluno.model';
 import { RegistroChamada } from '../../models/chamada.model';
 import { FaltaJustificada } from '../../models/falta-justificada.model';
 import { RegistroConteudo } from '../../models/conteudo.model';
+import { Avaliacao } from '../../models/avaliacao.model';
 import { MOCK_ESCOLA_ID, MOCK_USERS } from './mock-users';
 
 /**
@@ -170,6 +171,37 @@ function seedConteudo(): RegistroConteudo[] {
   ];
 }
 
+// ---- Avaliações descritivas -----------------------------------------
+
+function seedAvaliacoes(): Avaliacao[] {
+  return [
+    {
+      id: 'av-1',
+      alunoId: 'a-1',
+      turmaId: 't-1',
+      referencia: '1º semestre 2026',
+      texto:
+        'Alice demonstra bom entrosamento com os colegas e participa das rodas de conversa com entusiasmo. Está desenvolvendo a coordenação motora fina; recomenda-se continuar as atividades de recorte e pintura em casa.',
+    },
+    {
+      id: 'av-2',
+      alunoId: 'a-2',
+      turmaId: 't-1',
+      referencia: '1º semestre 2026',
+      texto:
+        'Bento é uma criança curiosa e questionadora. Precisa de apoio para respeitar a vez de falar dos colegas. Reconhece as vogais e demonstra interesse pelas histórias contadas.',
+    },
+    {
+      id: 'av-3',
+      alunoId: 'a-4',
+      turmaId: 't-2',
+      referencia: '1º semestre 2026',
+      texto:
+        'Davi tem ótima memória para músicas e sequências. Está mais seguro na socialização do que no início do ano. Acompanha bem as atividades de contagem até 10.',
+    },
+  ];
+}
+
 export const mockStore = {
   turmas: {
     all: (): Turma[] => load('turmas', seedTurmas),
@@ -191,5 +223,9 @@ export const mockStore = {
   conteudo: {
     all: (): RegistroConteudo[] => load('conteudo', seedConteudo),
     replace: (dados: RegistroConteudo[]): void => save('conteudo', dados),
+  },
+  avaliacoes: {
+    all: (): Avaliacao[] => load('avaliacoes', seedAvaliacoes),
+    replace: (dados: Avaliacao[]): void => save('avaliacoes', dados),
   },
 };

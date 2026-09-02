@@ -1,0 +1,35 @@
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.filtros mat-form-field {
+  width: 180px;
+}
+
+.dica {
+  color: var(--mat-sys-on-surface-variant, #6b7280);
+  font-size: 0.9rem;
+}
+
+.tabela {
+  width: 100%;
+  background: var(--mat-sys-surface, #fff);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.num {
+  text-align: center;
+  width: 90px;
+}
+
+.aval {
+  white-space: pre-wrap;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.75rem;
+  line-height: 1.45;
+  max-width: 520px;
+}

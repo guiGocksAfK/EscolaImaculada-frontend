@@ -37,6 +37,8 @@ import {
   RegistroConteudo,
   RegistroConteudoCreate,
 } from '../../models/conteudo.model';
+import { Avaliacao, AvaliacaoCreate } from '../../models/avaliacao.model';
+import { RelatorioResumo, ResumoAluno } from '../../models/relatorio.model';
 import { MOCK_USERS } from './mock-users';
 import { mockStore } from './mock-store';
 
@@ -125,7 +127,9 @@ function rotas(path: string, method: string): Handler | null {
     rotaAlunos(path, method) ??
     rotaChamada(path, method) ??
     rotaFaltas(path, method) ??
-    rotaConteudo(path, method)
+    rotaConteudo(path, method) ??
+    rotaAvaliacoes(path, method) ??
+    rotaRelatorios(path, method)
   );
 }
 
@@ -507,6 +511,139 @@ function rotaConteudo(path: string, method: string): Handler | null {
         return ok(null, 204);
       };
     }
+  }
+
+  return null;
+}
+
+function rotaAvaliacoes(path: string, method: string): Handler | null {
+  const enriquecer = (a: Avaliacao): Avaliacao => {
+    const aluno = mockStore.alunos.all().find((x) => x.id === a.alunoId);
+    const turma = mockStore.turmas.all().find((x) => x.id === a.turmaId);
+    return {
+      ...a,
+      aluno: aluno ? { id: aluno.id, nome: aluno.nome } : undefined,
+      turma: turma ? { id: turma.id, nome: turma.nome } : undefined,
+    };
+  };
+
+  if (path === '/avaliacoes' && method === 'GET') {
+    return (claims, _body, params) => {
+      const permitidas = turmasDoUsuario(claims);
+      const turmaId = params.get('turmaId');
+      const alunoId = params.get('alunoId');
+      const lista = mockStore.avaliacoes
+        .all()
+        .filter((a) => permitidas.has(a.turmaId))
+        .filter((a) => !turmaId || a.turmaId === turmaId)
+        .filter((a) => !alunoId || a.alunoId === alunoId)
+        .map(enriquecer)
+        .sort(
+          (a, b) =>
+            b.referencia.localeCompare(a.referencia, 'pt-BR') ||
+            (a.aluno?.nome ?? '').localeCompare(b.aluno?.nome ?? '', 'pt-BR'),
+        );
+      return ok(lista);
+    };
+  }
+
+  if (path === '/avaliacoes' && method === 'POST') {
+    return (claims, body) => {
+      const dto = body as AvaliacaoCreate;
+      if (!turmasDoUsuario(claims).has(dto.turmaId))
+        return erro(403, 'Turma fora do seu acesso');
+      const nova: Avaliacao = { ...dto, id: crypto.randomUUID() };
+      mockStore.avaliacoes.replace([...mockStore.avaliacoes.all(), nova]);
+      return ok(enriquecer(nova), 201);
+    };
+  }
+
+  const m = path.match(/^\/avaliacoes\/([^/]+)$/);
+  if (m) {
+    const id = m[1];
+
+    if (method === 'PUT') {
+      return (claims, body) => {
+        const dados = mockStore.avaliacoes.all();
+        const idx = dados.findIndex((a) => a.id === id);
+        if (idx < 0) return erro(404, 'Avaliação não encontrada');
+        const dto = body as AvaliacaoCreate;
+        const permitidas = turmasDoUsuario(claims);
+        if (!permitidas.has(dados[idx].turmaId) || !permitidas.has(dto.turmaId))
+          return erro(403, 'Turma fora do seu acesso');
+        dados[idx] = { ...dados[idx], ...dto, id };
+        mockStore.avaliacoes.replace(dados);
+        return ok(enriquecer(dados[idx]));
+      };
+    }
+
+    if (method === 'DELETE') {
+      return (claims) => {
+        const dados = mockStore.avaliacoes.all();
+        const alvo = dados.find((a) => a.id === id);
+        if (!alvo) return erro(404, 'Avaliação não encontrada');
+        if (!turmasDoUsuario(claims).has(alvo.turmaId))
+          return erro(403, 'Turma fora do seu acesso');
+        mockStore.avaliacoes.replace(dados.filter((a) => a.id !== id));
+        return ok(null, 204);
+      };
+    }
+  }
+
+  return null;
+}
+
+function rotaRelatorios(path: string, method: string): Handler | null {
+  if (path === '/relatorios/resumo' && method === 'GET') {
+    return (claims, _body, params) => {
+      const turmaId = params.get('turmaId') ?? '';
+      const ano = Number(params.get('ano'));
+      if (!turmasDoUsuario(claims).has(turmaId))
+        return erro(403, 'Turma fora do seu acesso');
+
+      const turma = mockStore.turmas.all().find((t) => t.id === turmaId);
+      const prefixoAno = `${ano}-`;
+
+      const chamada = mockStore.chamada
+        .all()
+        .filter((r) => r.turmaId === turmaId && r.data.startsWith(prefixoAno));
+      const diasLancados = new Set(chamada.map((r) => r.data)).size;
+
+      const faltasJust = mockStore.faltasJustificadas
+        .all()
+        .filter((f) => f.data.startsWith(prefixoAno));
+      const avaliacoes = mockStore.avaliacoes
+        .all()
+        .filter((a) => a.turmaId === turmaId);
+
+      const alunos = mockStore.alunos
+        .all()
+        .filter((a) => a.turmaId === turmaId && a.status === 'ATIVO')
+        .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+
+      const linhas: ResumoAluno[] = alunos.map((al) => {
+        const dele = chamada.filter((r) => r.alunoId === al.id);
+        return {
+          alunoId: al.id,
+          alunoNome: al.nome,
+          presencas: dele.filter((r) => r.status === 'C').length,
+          faltas: dele.filter((r) => r.status === 'F').length,
+          faltasJustificadas: faltasJust.filter((f) => f.alunoId === al.id)
+            .length,
+          avaliacoes: avaliacoes
+            .filter((a) => a.alunoId === al.id)
+            .map((a) => ({ referencia: a.referencia, texto: a.texto })),
+        };
+      });
+
+      return ok<RelatorioResumo>({
+        turmaId,
+        turmaNome: turma?.nome ?? '',
+        ano,
+        diasLancados,
+        linhas,
+      });
+    };
   }
 
   return null;

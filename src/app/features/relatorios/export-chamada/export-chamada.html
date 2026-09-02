@@ -1,0 +1,82 @@
+<div class="filtros">
+  <mat-form-field>
+    <mat-label>Turma</mat-label>
+    <mat-select [(ngModel)]="turmaId" (ngModelChange)="carregar()">
+      @for (t of turmas(); track t.id) {
+        <mat-option [value]="t.id">{{ t.nome }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field>
+    <mat-label>Mês</mat-label>
+    <mat-select [(ngModel)]="mes" (ngModelChange)="carregar()">
+      @for (m of meses; track $index) {
+        <mat-option [value]="$index + 1">{{ m }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field>
+    <mat-label>Ano</mat-label>
+    <mat-select [(ngModel)]="ano" (ngModelChange)="carregar()">
+      @for (a of anos; track a) {
+        <mat-option [value]="a">{{ a }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="baixarPdf()"
+    [disabled]="!dados() || dados()!.dias.length === 0"
+  >
+    <mat-icon>picture_as_pdf</mat-icon>
+    Baixar PDF
+  </button>
+</div>
+
+@if (carregando()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (!turmaId) {
+  <p class="dica">Escolha a turma e o mês para gerar o relatório.</p>
+} @else if (dados(); as d) {
+  @if (d.dias.length === 0) {
+    <p class="dica">Nenhuma chamada lançada neste mês.</p>
+  } @else {
+    <p class="dica">Pré-visualização — o PDF sai em paisagem, pronto para impressão.</p>
+    <div class="scroll">
+      <table class="grade">
+        <thead>
+          <tr>
+            <th class="col-nome">Aluno</th>
+            @for (dia of d.dias; track dia) {
+              <th>{{ diaCurto(dia) }}</th>
+            }
+            <th class="col-total">Faltas</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (linha of d.linhas; track linha.alunoId) {
+            <tr>
+              <td class="col-nome">{{ linha.alunoNome }}</td>
+              @for (dia of d.dias; track dia) {
+                <td
+                  class="cel"
+                  [class.f]="linha.porDia[dia] === 'F'"
+                  [class.d]="linha.porDia[dia] === 'D'"
+                >
+                  {{ linha.porDia[dia] ?? '·' }}
+                </td>
+              }
+              <td class="col-total">{{ linha.totalFaltas }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+}

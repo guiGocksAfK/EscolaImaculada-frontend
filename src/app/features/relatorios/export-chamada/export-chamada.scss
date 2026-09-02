@@ -1,0 +1,64 @@
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.filtros mat-form-field {
+  width: 160px;
+}
+
+.dica {
+  color: var(--mat-sys-on-surface-variant, #6b7280);
+  font-size: 0.9rem;
+}
+
+.scroll {
+  overflow-x: auto;
+  border: 1px solid var(--mat-sys-outline-variant, #e5e7eb);
+  border-radius: 10px;
+}
+
+.grade {
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  background: var(--mat-sys-surface, #fff);
+}
+
+.grade th,
+.grade td {
+  border: 1px solid var(--mat-sys-outline-variant, #eee);
+  padding: 0.35rem 0.5rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.col-nome {
+  position: sticky;
+  left: 0;
+  background: var(--mat-sys-surface, #fff);
+  text-align: left;
+  min-width: 160px;
+  z-index: 1;
+}
+
+thead .col-nome {
+  z-index: 2;
+}
+
+.col-total {
+  font-weight: 600;
+}
+
+.cel.f {
+  background: #fde8e8;
+  color: #b3261e;
+  font-weight: 600;
+}
+
+.cel.d {
+  background: #fff4e5;
+  color: #b26a00;
+  font-weight: 600;
+}
