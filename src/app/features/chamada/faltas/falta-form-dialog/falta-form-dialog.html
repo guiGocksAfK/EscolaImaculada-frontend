@@ -1,0 +1,56 @@
+<h2 mat-dialog-title>{{ edicao ? 'Editar justificativa' : 'Nova justificativa' }}</h2>
+
+<mat-dialog-content>
+  <form class="form" [formGroup]="form" (ngSubmit)="salvar()">
+    <mat-form-field>
+      <mat-label>Turma</mat-label>
+      <mat-select formControlName="turmaId">
+        @for (t of turmas(); track t.id) {
+          <mat-option [value]="t.id">{{ t.nome }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Aluno</mat-label>
+      <mat-select formControlName="alunoId" [disabled]="alunos().length === 0">
+        @for (a of alunos(); track a.id) {
+          <mat-option [value]="a.id">{{ a.nome }}</mat-option>
+        }
+      </mat-select>
+      @if (form.controls.alunoId.touched && form.controls.alunoId.invalid) {
+        <mat-error>Selecione o aluno.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Data da falta</mat-label>
+      <input matInput [matDatepicker]="dp" formControlName="data" />
+      <mat-datepicker-toggle matIconSuffix [for]="dp" />
+      <mat-datepicker #dp />
+      @if (form.controls.data.touched && form.controls.data.invalid) {
+        <mat-error>Informe a data.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Motivo</mat-label>
+      <textarea
+        matInput
+        formControlName="motivo"
+        rows="3"
+        placeholder="Atestado médico, viagem, doença…"
+      ></textarea>
+      @if (form.controls.motivo.touched && form.controls.motivo.invalid) {
+        <mat-error>Descreva o motivo.</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancelar</button>
+  <button mat-flat-button color="primary" (click)="salvar()">
+    {{ edicao ? 'Salvar' : 'Registrar' }}
+  </button>
+</mat-dialog-actions>
