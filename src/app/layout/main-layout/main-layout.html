@@ -1,0 +1,38 @@
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <mat-icon>school</mat-icon>
+      <span>Escola Imaculada</span>
+    </div>
+
+    <nav>
+      @for (item of itens(); track item.path) {
+        <a [routerLink]="item.path" routerLinkActive="active" class="nav-link">
+          <mat-icon>{{ item.icon }}</mat-icon>
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+  </aside>
+
+  <div class="content">
+    <header class="topbar">
+      <div class="spacer"></div>
+      @if (usuario(); as u) {
+        <span class="user">
+          <mat-icon>account_circle</mat-icon>
+          {{ u.nome }}
+          <small>({{ u.papel === 'DIRETORA' ? 'Diretora' : 'Professora' }})</small>
+        </span>
+      }
+      <button mat-stroked-button (click)="sair()">
+        <mat-icon>logout</mat-icon>
+        Sair
+      </button>
+    </header>
+
+    <main class="page">
+      <router-outlet />
+    </main>
+  </div>
+</div>
