@@ -1,0 +1,75 @@
+<div class="filtros">
+  <mat-form-field>
+    <mat-label>Turma</mat-label>
+    <mat-select [(ngModel)]="turmaId" (ngModelChange)="carregar()">
+      @for (t of turmas(); track t.id) {
+        <mat-option [value]="t.id">{{ t.nome }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field>
+    <mat-label>Data</mat-label>
+    <input
+      matInput
+      [matDatepicker]="dp"
+      [(ngModel)]="data"
+      (ngModelChange)="carregar()"
+    />
+    <mat-datepicker-toggle matIconSuffix [for]="dp" />
+    <mat-datepicker #dp />
+  </mat-form-field>
+</div>
+
+@if (carregando()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (!turmaId) {
+  <p class="dica">Escolha a turma e a data para lançar a chamada.</p>
+} @else if (!carregando() && alunos().length === 0) {
+  <p class="dica">Nenhum aluno ativo nesta turma.</p>
+} @else if (!carregando()) {
+  <div class="barra">
+    <div class="resumo">
+      @if (jaLancada()) {
+        <span class="tag tag--ok">Chamada já lançada — editando</span>
+      }
+      <span>Presentes: <strong>{{ resumo().C }}</strong></span>
+      <span>Faltas: <strong>{{ resumo().F }}</strong></span>
+      @if (resumo().D) {
+        <span>Desistentes: <strong>{{ resumo().D }}</strong></span>
+      }
+    </div>
+    <div class="atalhos">
+      <button mat-button (click)="marcarTodos('C')">Todos presentes</button>
+      <button mat-button (click)="marcarTodos('F')">Todos falta</button>
+    </div>
+  </div>
+
+  <ul class="lista">
+    @for (a of alunos(); track a.id) {
+      <li>
+        <span class="nome">{{ a.nome }}</span>
+        <mat-button-toggle-group [(ngModel)]="marcacoes[a.id]" hideSingleSelectionIndicator>
+          @for (s of statusOpcoes; track s) {
+            <mat-button-toggle [value]="s">{{ s }}</mat-button-toggle>
+          }
+        </mat-button-toggle-group>
+      </li>
+    }
+  </ul>
+
+  <div class="acoes">
+    <button
+      mat-flat-button
+      color="primary"
+      (click)="salvar()"
+      [disabled]="salvando()"
+    >
+      {{ salvando() ? 'Salvando…' : 'Salvar chamada' }}
+    </button>
+  </div>
+
+  <p class="legenda">C = compareceu · F = falta · D = desistente</p>
+}

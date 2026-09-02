@@ -53,11 +53,9 @@ export const routes: Routes = [
           import('./features/avaliacoes/avaliacoes').then((m) => m.Avaliacoes),
       },
       {
+        // Faltas justificadas agora é uma aba dentro de /chamada.
         path: 'faltas-justificadas',
-        loadComponent: () =>
-          import('./features/faltas-justificadas/faltas-justificadas').then(
-            (m) => m.FaltasJustificadas,
-          ),
+        redirectTo: 'chamada',
       },
       {
         path: 'relatorios',

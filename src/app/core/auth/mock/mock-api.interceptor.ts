@@ -23,6 +23,16 @@ import {
   AlunoUpdate,
   StatusAluno,
 } from '../../models/aluno.model';
+import {
+  ChamadaDia,
+  ChamadaMensal,
+  RegistroChamada,
+  StatusDia,
+} from '../../models/chamada.model';
+import {
+  FaltaJustificada,
+  FaltaJustificadaCreate,
+} from '../../models/falta-justificada.model';
 import { MOCK_USERS } from './mock-users';
 import { mockStore } from './mock-store';
 
@@ -108,7 +118,9 @@ function rotas(path: string, method: string): Handler | null {
   return (
     rotaProfessoras(path, method) ??
     rotaTurmas(path, method) ??
-    rotaAlunos(path, method)
+    rotaAlunos(path, method) ??
+    rotaChamada(path, method) ??
+    rotaFaltas(path, method)
   );
 }
 
@@ -258,6 +270,172 @@ function rotaAlunos(path: string, method: string): Handler | null {
       mockStore.alunos.replace(lista);
       return ok(comTurma(lista[idx]));
     };
+  }
+
+  return null;
+}
+
+function rotaChamada(path: string, method: string): Handler | null {
+  // GET /chamada?turmaId&data  -> registros do dia
+  if (path === '/chamada' && method === 'GET') {
+    return (claims, _body, params) => {
+      const turmaId = params.get('turmaId') ?? '';
+      const data = params.get('data') ?? '';
+      if (!turmasDoUsuario(claims).has(turmaId))
+        return erro(403, 'Turma fora do seu acesso');
+      const registros = mockStore.chamada
+        .all()
+        .filter((r) => r.turmaId === turmaId && r.data === data)
+        .map((r) => ({ alunoId: r.alunoId, status: r.status }));
+      return ok<ChamadaDia>({ turmaId, data, registros });
+    };
+  }
+
+  // PUT /chamada  -> upsert do dia inteiro
+  if (path === '/chamada' && method === 'PUT') {
+    return (claims, body) => {
+      const dia = body as ChamadaDia;
+      if (!turmasDoUsuario(claims).has(dia.turmaId))
+        return erro(403, 'Turma fora do seu acesso');
+      const outros = mockStore.chamada
+        .all()
+        .filter((r) => !(r.turmaId === dia.turmaId && r.data === dia.data));
+      const novos: RegistroChamada[] = dia.registros.map((r) => ({
+        id: `rc-${r.alunoId}-${dia.data}`,
+        turmaId: dia.turmaId,
+        alunoId: r.alunoId,
+        data: dia.data,
+        status: r.status,
+      }));
+      mockStore.chamada.replace([...outros, ...novos]);
+      return ok<ChamadaDia>(dia);
+    };
+  }
+
+  // GET /chamada/mensal?turmaId&ano&mes
+  if (path === '/chamada/mensal' && method === 'GET') {
+    return (claims, _body, params) => {
+      const turmaId = params.get('turmaId') ?? '';
+      const ano = Number(params.get('ano'));
+      const mes = Number(params.get('mes'));
+      if (!turmasDoUsuario(claims).has(turmaId))
+        return erro(403, 'Turma fora do seu acesso');
+
+      const prefixo = `${ano}-${`${mes}`.padStart(2, '0')}`;
+      const registros = mockStore.chamada
+        .all()
+        .filter((r) => r.turmaId === turmaId && r.data.startsWith(prefixo));
+      const dias = [...new Set(registros.map((r) => r.data))].sort();
+
+      const alunos = mockStore.alunos
+        .all()
+        .filter((a) => a.turmaId === turmaId && a.status === 'ATIVO')
+        .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+
+      const linhas = alunos.map((a) => {
+        const porDia: Record<string, StatusDia | null> = {};
+        let totalFaltas = 0;
+        for (const d of dias) {
+          const r = registros.find(
+            (x) => x.alunoId === a.id && x.data === d,
+          );
+          porDia[d] = r ? r.status : null;
+          if (r?.status === 'F') totalFaltas++;
+        }
+        return { alunoId: a.id, alunoNome: a.nome, porDia, totalFaltas };
+      });
+
+      return ok<ChamadaMensal>({ turmaId, ano, mes, dias, linhas });
+    };
+  }
+
+  return null;
+}
+
+function rotaFaltas(path: string, method: string): Handler | null {
+  const comAluno = (f: FaltaJustificada): FaltaJustificada => {
+    const a = mockStore.alunos.all().find((x) => x.id === f.alunoId);
+    return {
+      ...f,
+      aluno: a ? { id: a.id, nome: a.nome, turmaId: a.turmaId } : undefined,
+    };
+  };
+
+  if (path === '/faltas-justificadas' && method === 'GET') {
+    return (claims, _body, params) => {
+      const permitidas = turmasDoUsuario(claims);
+      const turmaId = params.get('turmaId');
+      const alunoId = params.get('alunoId');
+      const alunosPorId = new Map(
+        mockStore.alunos.all().map((a) => [a.id, a]),
+      );
+
+      const lista = mockStore.faltasJustificadas
+        .all()
+        .filter((f) => {
+          const a = alunosPorId.get(f.alunoId);
+          return !!a && permitidas.has(a.turmaId);
+        })
+        .filter((f) => !alunoId || f.alunoId === alunoId)
+        .filter(
+          (f) => !turmaId || alunosPorId.get(f.alunoId)?.turmaId === turmaId,
+        )
+        .map(comAluno)
+        .sort((a, b) => b.data.localeCompare(a.data));
+
+      return ok(lista);
+    };
+  }
+
+  if (path === '/faltas-justificadas' && method === 'POST') {
+    return (claims, body) => {
+      const dto = body as FaltaJustificadaCreate;
+      const a = mockStore.alunos.all().find((x) => x.id === dto.alunoId);
+      if (!a || !turmasDoUsuario(claims).has(a.turmaId))
+        return erro(403, 'Aluno fora do seu acesso');
+      const nova: FaltaJustificada = { ...dto, id: crypto.randomUUID() };
+      mockStore.faltasJustificadas.replace([
+        ...mockStore.faltasJustificadas.all(),
+        nova,
+      ]);
+      return ok(comAluno(nova), 201);
+    };
+  }
+
+  const mId = path.match(/^\/faltas-justificadas\/([^/]+)$/);
+  if (mId) {
+    const id = mId[1];
+    const lista = () => mockStore.faltasJustificadas.all();
+    const podeMexer = (claims: Claims, alunoId: string) => {
+      const a = mockStore.alunos.all().find((x) => x.id === alunoId);
+      return !!a && turmasDoUsuario(claims).has(a.turmaId);
+    };
+
+    if (method === 'PUT') {
+      return (claims, body) => {
+        const dados = lista();
+        const idx = dados.findIndex((f) => f.id === id);
+        if (idx < 0) return erro(404, 'Registro não encontrado');
+        const dto = body as FaltaJustificadaCreate;
+        if (!podeMexer(claims, dto.alunoId) || !podeMexer(claims, dados[idx].alunoId))
+          return erro(403, 'Fora do seu acesso');
+        dados[idx] = { ...dados[idx], ...dto, id };
+        mockStore.faltasJustificadas.replace(dados);
+        return ok(comAluno(dados[idx]));
+      };
+    }
+
+    if (method === 'DELETE') {
+      return (claims) => {
+        const dados = lista();
+        const alvo = dados.find((f) => f.id === id);
+        if (!alvo) return erro(404, 'Registro não encontrado');
+        if (!podeMexer(claims, alvo.alunoId))
+          return erro(403, 'Fora do seu acesso');
+        mockStore.faltasJustificadas.replace(dados.filter((f) => f.id !== id));
+        return ok(null, 204);
+      };
+    }
   }
 
   return null;

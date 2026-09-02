@@ -75,11 +75,7 @@ export class Dashboard {
     { label: 'Fazer a chamada', icon: 'fact_check', path: '/chamada' },
     { label: 'Registrar conteúdo', icon: 'menu_book', path: '/conteudo' },
     { label: 'Avaliações', icon: 'rate_review', path: '/avaliacoes' },
-    {
-      label: 'Faltas justificadas',
-      icon: 'event_busy',
-      path: '/faltas-justificadas',
-    },
+    { label: 'Faltas justificadas', icon: 'event_busy', path: '/chamada' },
     { label: 'Alunos', icon: 'badge', path: '/alunos' },
     { label: 'Relatórios', icon: 'assessment', path: '/relatorios' },
   ];

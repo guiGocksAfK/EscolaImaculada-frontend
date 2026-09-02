@@ -1,6 +1,14 @@
 /** C = compareceu, F = falta, D = desistente */
 export type StatusDia = 'C' | 'F' | 'D';
 
+export const STATUS_DIA: StatusDia[] = ['C', 'F', 'D'];
+
+export const STATUS_DIA_LABEL: Record<StatusDia, string> = {
+  C: 'Compareceu',
+  F: 'Falta',
+  D: 'Desistente',
+};
+
 export interface RegistroChamada {
   id: string;
   turmaId: string;
@@ -21,7 +29,7 @@ export interface ChamadaMensal {
   turmaId: string;
   ano: number;
   mes: number; // 1-12
-  dias: string[]; // datas com aula no mês
+  dias: string[]; // datas com chamada lançada no mês
   linhas: Array<{
     alunoId: string;
     alunoNome: string;

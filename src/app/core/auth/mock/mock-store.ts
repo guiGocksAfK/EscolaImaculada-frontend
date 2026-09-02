@@ -1,5 +1,7 @@
 import { Turma } from '../../models/turma.model';
 import { Aluno } from '../../models/aluno.model';
+import { RegistroChamada } from '../../models/chamada.model';
+import { FaltaJustificada } from '../../models/falta-justificada.model';
 import { MOCK_ESCOLA_ID, MOCK_USERS } from './mock-users';
 
 /**
@@ -95,6 +97,50 @@ function seedAlunos(): Aluno[] {
   ];
 }
 
+// ---- Chamada ------------------------------------------------------------
+
+function seedChamada(): RegistroChamada[] {
+  const reg = (
+    alunoId: string,
+    data: string,
+    status: RegistroChamada['status'],
+  ): RegistroChamada => ({
+    id: `rc-${alunoId}-${data}`,
+    turmaId: 't-1',
+    alunoId,
+    data,
+    status,
+  });
+
+  return [
+    reg('a-1', '2026-08-31', 'C'),
+    reg('a-2', '2026-08-31', 'C'),
+    reg('a-3', '2026-08-31', 'F'),
+    reg('a-1', '2026-09-01', 'C'),
+    reg('a-2', '2026-09-01', 'F'),
+    reg('a-3', '2026-09-01', 'C'),
+  ];
+}
+
+// ---- Faltas justificadas ----------------------------------------------
+
+function seedFaltas(): FaltaJustificada[] {
+  return [
+    {
+      id: 'fj-1',
+      alunoId: 'a-2',
+      data: '2026-09-01',
+      motivo: 'Consulta médica (atestado apresentado).',
+    },
+    {
+      id: 'fj-2',
+      alunoId: 'a-3',
+      data: '2026-08-31',
+      motivo: 'Viagem em família.',
+    },
+  ];
+}
+
 export const mockStore = {
   turmas: {
     all: (): Turma[] => load('turmas', seedTurmas),
@@ -103,5 +149,14 @@ export const mockStore = {
   alunos: {
     all: (): Aluno[] => load('alunos', seedAlunos),
     replace: (dados: Aluno[]): void => save('alunos', dados),
+  },
+  chamada: {
+    all: (): RegistroChamada[] => load('chamada', seedChamada),
+    replace: (dados: RegistroChamada[]): void => save('chamada', dados),
+  },
+  faltasJustificadas: {
+    all: (): FaltaJustificada[] => load('faltasJustificadas', seedFaltas),
+    replace: (dados: FaltaJustificada[]): void =>
+      save('faltasJustificadas', dados),
   },
 };

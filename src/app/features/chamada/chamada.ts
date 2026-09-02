@@ -1,34 +1,34 @@
 import { Component } from '@angular/core';
-import { MatIconModule } from '@angular/material/icon';
+import { MatTabsModule } from '@angular/material/tabs';
+
+import { ChamadaDia } from './chamada-dia/chamada-dia';
+import { ChamadaMensal } from './chamada-mensal/chamada-mensal';
+import { Faltas } from './faltas/faltas';
 
 @Component({
   selector: 'app-chamada',
-  imports: [MatIconModule],
+  imports: [MatTabsModule, ChamadaDia, ChamadaMensal, Faltas],
   template: `
-    <section class="feature-stub">
-      <mat-icon>fact_check</mat-icon>
-      <h2>Chamada</h2>
-      <p>Módulo em construção.</p>
-    </section>
+    <h1>Chamada</h1>
+
+    <mat-tab-group>
+      <mat-tab label="Chamada do dia">
+        <app-chamada-dia />
+      </mat-tab>
+      <mat-tab label="Visão mensal">
+        <app-chamada-mensal />
+      </mat-tab>
+      <mat-tab label="Faltas justificadas">
+        <app-faltas />
+      </mat-tab>
+    </mat-tab-group>
   `,
   styles: `
-    .feature-stub {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 3rem 1rem;
-      color: var(--mat-sys-on-surface-variant, #6b7280);
-      text-align: center;
+    h1 {
+      margin: 0 0 0.75rem;
     }
-    .feature-stub mat-icon {
-      font-size: 2.5rem;
-      width: 2.5rem;
-      height: 2.5rem;
-    }
-    .feature-stub h2 {
-      margin: 0;
-      color: var(--mat-sys-on-surface, #1f2937);
+    :host ::ng-deep .mat-mdc-tab-body-content {
+      padding: 1.25rem 0.25rem;
     }
   `,
 })
