@@ -10,6 +10,7 @@ export interface MockUser {
   nome: string;
   cpf: string; // só dígitos
   senha: string;
+  dataNascimento: string; // ISO date
   papel: Papel;
   escolaId: string;
 }
@@ -22,6 +23,7 @@ export const MOCK_USERS: MockUser[] = [
     nome: 'Maria Aparecida',
     cpf: '11111111111',
     senha: '123456',
+    dataNascimento: '1978-04-12',
     papel: 'DIRETORA',
     escolaId: MOCK_ESCOLA_ID,
   },
@@ -30,6 +32,7 @@ export const MOCK_USERS: MockUser[] = [
     nome: 'Joana Silva',
     cpf: '22222222222',
     senha: '123456',
+    dataNascimento: '1990-08-25',
     papel: 'PROFESSORA',
     escolaId: MOCK_ESCOLA_ID,
   },
@@ -38,6 +41,7 @@ export const MOCK_USERS: MockUser[] = [
     nome: 'Ana Souza',
     cpf: '33333333333',
     senha: '123456',
+    dataNascimento: '1985-11-03',
     papel: 'PROFESSORA',
     escolaId: MOCK_ESCOLA_ID,
   },

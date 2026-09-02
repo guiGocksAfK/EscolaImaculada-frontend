@@ -39,7 +39,7 @@ import {
 } from '../../models/conteudo.model';
 import { Avaliacao, AvaliacaoCreate } from '../../models/avaliacao.model';
 import { RelatorioResumo, ResumoAluno } from '../../models/relatorio.model';
-import { MOCK_USERS } from './mock-users';
+import { MockUser } from './mock-users';
 import { mockStore } from './mock-store';
 
 /**
@@ -99,7 +99,7 @@ function erro(status: number, message: string) {
 // ---- helpers de domínio --------------------------------------------------
 
 function comProfessora(t: Turma): Turma {
-  const p = MOCK_USERS.find((u) => u.id === t.professoraId);
+  const p = mockStore.usuarios.all().find((u) => u.id === t.professoraId);
   return { ...t, professora: p ? { id: p.id, nome: p.nome } : undefined };
 }
 
@@ -134,15 +134,109 @@ function rotas(path: string, method: string): Handler | null {
 }
 
 function rotaProfessoras(path: string, method: string): Handler | null {
+  const detalhe = (u: MockUser) => ({
+    id: u.id,
+    nome: u.nome,
+    cpf: u.cpf,
+    dataNascimento: u.dataNascimento,
+    totalTurmas: mockStore.turmas
+      .all()
+      .filter((t) => t.professoraId === u.id).length,
+  });
+
   if (path === '/professoras' && method === 'GET') {
     return () =>
       ok(
-        MOCK_USERS.filter((u) => u.papel === 'PROFESSORA').map((u) => ({
-          id: u.id,
-          nome: u.nome,
-        })),
+        mockStore.usuarios
+          .all()
+          .filter((u) => u.papel === 'PROFESSORA')
+          .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+          .map(detalhe),
       );
   }
+
+  if (path === '/professoras' && method === 'POST') {
+    return (claims, body) => {
+      if (claims.papel !== 'DIRETORA') return erro(403, 'Sem permissão');
+      const dto = body as {
+        nome: string;
+        cpf: string;
+        dataNascimento: string;
+        senha: string;
+      };
+      const cpf = dto.cpf.replace(/\D/g, '');
+      const usuarios = mockStore.usuarios.all();
+      if (usuarios.some((u) => u.cpf === cpf))
+        return erro(409, 'Já existe usuário com esse CPF');
+      const nova = {
+        id: crypto.randomUUID(),
+        nome: dto.nome.trim(),
+        cpf,
+        senha: dto.senha,
+        dataNascimento: dto.dataNascimento,
+        papel: 'PROFESSORA' as const,
+        escolaId: claims.escolaId,
+      };
+      mockStore.usuarios.replace([...usuarios, nova]);
+      return ok(detalhe(nova), 201);
+    };
+  }
+
+  const m = path.match(/^\/professoras\/([^/]+)$/);
+  if (m) {
+    const id = m[1];
+
+    if (method === 'PUT') {
+      return (claims, body) => {
+        if (claims.papel !== 'DIRETORA') return erro(403, 'Sem permissão');
+        const usuarios = mockStore.usuarios.all();
+        const idx = usuarios.findIndex(
+          (u) => u.id === id && u.papel === 'PROFESSORA',
+        );
+        if (idx < 0) return erro(404, 'Professora não encontrada');
+        const dto = body as {
+          nome: string;
+          cpf: string;
+          dataNascimento: string;
+          senha?: string;
+        };
+        const cpf = dto.cpf.replace(/\D/g, '');
+        if (usuarios.some((u) => u.cpf === cpf && u.id !== id))
+          return erro(409, 'Já existe usuário com esse CPF');
+        usuarios[idx] = {
+          ...usuarios[idx],
+          nome: dto.nome.trim(),
+          cpf,
+          dataNascimento: dto.dataNascimento,
+          senha: dto.senha ? dto.senha : usuarios[idx].senha,
+        };
+        mockStore.usuarios.replace(usuarios);
+        return ok(detalhe(usuarios[idx]));
+      };
+    }
+
+    if (method === 'DELETE') {
+      return (claims) => {
+        if (claims.papel !== 'DIRETORA') return erro(403, 'Sem permissão');
+        const usuarios = mockStore.usuarios.all();
+        const alvo = usuarios.find(
+          (u) => u.id === id && u.papel === 'PROFESSORA',
+        );
+        if (!alvo) return erro(404, 'Professora não encontrada');
+        const temTurmas = mockStore.turmas
+          .all()
+          .some((t) => t.professoraId === id);
+        if (temTurmas)
+          return erro(
+            409,
+            'Professora tem turmas vinculadas. Reatribua as turmas antes de excluir.',
+          );
+        mockStore.usuarios.replace(usuarios.filter((u) => u.id !== id));
+        return ok(null, 204);
+      };
+    }
+  }
+
   return null;
 }
 
