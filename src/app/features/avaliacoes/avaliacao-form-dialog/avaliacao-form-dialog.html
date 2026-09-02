@@ -1,0 +1,59 @@
+<h2 mat-dialog-title>{{ edicao ? 'Editar avaliação' : 'Nova avaliação' }}</h2>
+
+<mat-dialog-content>
+  <form class="form" [formGroup]="form" (ngSubmit)="salvar()">
+    <div class="linha">
+      <mat-form-field>
+        <mat-label>Turma</mat-label>
+        <mat-select formControlName="turmaId">
+          @for (t of turmas(); track t.id) {
+            <mat-option [value]="t.id">{{ t.nome }}</mat-option>
+          }
+        </mat-select>
+        @if (form.controls.turmaId.touched && form.controls.turmaId.invalid) {
+          <mat-error>Selecione a turma.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Aluno</mat-label>
+        <mat-select formControlName="alunoId" [disabled]="alunos().length === 0">
+          @for (a of alunos(); track a.id) {
+            <mat-option [value]="a.id">{{ a.nome }}</mat-option>
+          }
+        </mat-select>
+        @if (form.controls.alunoId.touched && form.controls.alunoId.invalid) {
+          <mat-error>Selecione o aluno.</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <mat-form-field>
+      <mat-label>Período de referência</mat-label>
+      <input matInput formControlName="referencia" placeholder="Ex: 1º semestre 2026" />
+      @if (form.controls.referencia.touched && form.controls.referencia.invalid) {
+        <mat-error>Informe o período.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Avaliação descritiva</mat-label>
+      <textarea
+        matInput
+        formControlName="texto"
+        rows="9"
+        placeholder="Desenvolvimento, socialização, autonomia, pontos de atenção…"
+      ></textarea>
+      @if (form.controls.texto.touched && form.controls.texto.invalid) {
+        <mat-error>Escreva a avaliação.</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancelar</button>
+  <button mat-flat-button color="primary" (click)="salvar()">
+    {{ edicao ? 'Salvar' : 'Registrar' }}
+  </button>
+</mat-dialog-actions>

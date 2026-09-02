@@ -1,0 +1,28 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-top: 0.5rem;
+  width: 520px;
+  max-width: 100%;
+}
+
+.linha {
+  display: flex;
+  gap: 1rem;
+}
+
+.linha mat-form-field {
+  flex: 1;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+@media (max-width: 520px) {
+  .linha {
+    flex-direction: column;
+    gap: 0;
+  }
+}
