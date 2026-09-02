@@ -1,6 +1,7 @@
 import {
   HttpErrorResponse,
   HttpInterceptorFn,
+  HttpParams,
   HttpResponse,
 } from '@angular/common/http';
 import {
@@ -16,12 +17,18 @@ import { jwtDecode } from 'jwt-decode';
 import { environment } from '../../../../environments/environment';
 import { JwtClaims } from '../auth.models';
 import { Turma, TurmaCreate } from '../../models/turma.model';
+import {
+  Aluno,
+  AlunoCreate,
+  AlunoUpdate,
+  StatusAluno,
+} from '../../models/aluno.model';
 import { MOCK_USERS } from './mock-users';
 import { mockStore } from './mock-store';
 
 /**
- * Responde às chamadas REST dos módulos (turmas, professoras, ...) usando o
- * "banco" em localStorage. Só age se `environment.useMock` for true.
+ * Responde às chamadas REST dos módulos (turmas, professoras, alunos, ...)
+ * usando o "banco" em localStorage. Só age se `environment.useMock` for true.
  * Remover este arquivo (e o registro em app.config.ts) quando a API real entrar.
  */
 export const mockApiInterceptor: HttpInterceptorFn = (req, next) => {
@@ -29,15 +36,16 @@ export const mockApiInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
 
-  const path = req.url.slice(environment.apiUrl.length);
+  // req.url não carrega a query string; os filtros vêm em req.params.
+  const rawPath = req.url.slice(environment.apiUrl.length).split('?')[0];
   const claims = lerClaims(req.headers.get('Authorization'));
 
-  const handler = rotas(path, req.method);
+  const handler = rotas(rawPath, req.method);
   if (!handler || !claims) {
     return next(req);
   }
 
-  return handler(claims, req.body, path).pipe(
+  return handler(claims, req.body, req.params).pipe(
     materialize(),
     delay(400),
     dematerialize(),
@@ -50,7 +58,7 @@ type Claims = JwtClaims;
 type Handler = (
   claims: Claims,
   body: unknown,
-  path: string,
+  params: HttpParams,
 ) => Observable<HttpResponse<unknown>>;
 
 function lerClaims(auth: string | null): Claims | null {
@@ -72,13 +80,39 @@ function erro(status: number, message: string) {
   );
 }
 
+// ---- helpers de domínio --------------------------------------------------
+
 function comProfessora(t: Turma): Turma {
   const p = MOCK_USERS.find((u) => u.id === t.professoraId);
   return { ...t, professora: p ? { id: p.id, nome: p.nome } : undefined };
 }
 
+function comTurma(a: Aluno): Aluno {
+  const t = mockStore.turmas.all().find((x) => x.id === a.turmaId);
+  return { ...a, turma: t ? { id: t.id, nome: t.nome } : undefined };
+}
+
+/** Ids das turmas visíveis para o usuário (professora: só as dela). */
+function turmasDoUsuario(claims: Claims): Set<string> {
+  const todas = mockStore.turmas.all();
+  const minhas =
+    claims.papel === 'DIRETORA'
+      ? todas
+      : todas.filter((t) => t.professoraId === claims.sub);
+  return new Set(minhas.map((t) => t.id));
+}
+
+// ---- roteador -----------------------------------------------------------
+
 function rotas(path: string, method: string): Handler | null {
-  // /professoras
+  return (
+    rotaProfessoras(path, method) ??
+    rotaTurmas(path, method) ??
+    rotaAlunos(path, method)
+  );
+}
+
+function rotaProfessoras(path: string, method: string): Handler | null {
   if (path === '/professoras' && method === 'GET') {
     return () =>
       ok(
@@ -88,10 +122,12 @@ function rotas(path: string, method: string): Handler | null {
         })),
       );
   }
+  return null;
+}
 
-  // /turmas
+function rotaTurmas(path: string, method: string): Handler | null {
   if (path === '/turmas' && method === 'GET') {
-    return (claims: Claims) => {
+    return (claims) => {
       const todas = mockStore.turmas.all().map(comProfessora);
       const visiveis =
         claims.papel === 'DIRETORA'
@@ -102,7 +138,7 @@ function rotas(path: string, method: string): Handler | null {
   }
 
   if (path === '/turmas' && method === 'POST') {
-    return (claims: Claims, body: unknown) => {
+    return (claims, body) => {
       if (claims.papel !== 'DIRETORA') return erro(403, 'Sem permissão');
       const dto = body as TurmaCreate;
       const nova: Turma = {
@@ -115,25 +151,22 @@ function rotas(path: string, method: string): Handler | null {
     };
   }
 
-  const matchId = path.match(/^\/turmas\/([^/]+)$/);
-  if (matchId) {
-    const id = matchId[1];
-
+  const m = path.match(/^\/turmas\/([^/]+)$/);
+  if (m) {
+    const id = m[1];
     if (method === 'PUT') {
-      return (claims: Claims, body: unknown) => {
+      return (claims, body) => {
         if (claims.papel !== 'DIRETORA') return erro(403, 'Sem permissão');
         const lista = mockStore.turmas.all();
         const idx = lista.findIndex((t) => t.id === id);
         if (idx < 0) return erro(404, 'Turma não encontrada');
-        const atualizada: Turma = { ...lista[idx], ...(body as TurmaCreate), id };
-        lista[idx] = atualizada;
+        lista[idx] = { ...lista[idx], ...(body as TurmaCreate), id };
         mockStore.turmas.replace(lista);
-        return ok(comProfessora(atualizada));
+        return ok(comProfessora(lista[idx]));
       };
     }
-
     if (method === 'DELETE') {
-      return (claims: Claims) => {
+      return (claims) => {
         if (claims.papel !== 'DIRETORA') return erro(403, 'Sem permissão');
         const lista = mockStore.turmas.all();
         if (!lista.some((t) => t.id === id))
@@ -142,6 +175,89 @@ function rotas(path: string, method: string): Handler | null {
         return ok(null, 204);
       };
     }
+  }
+
+  return null;
+}
+
+function rotaAlunos(path: string, method: string): Handler | null {
+  if (path === '/alunos' && method === 'GET') {
+    return (claims, _body, params) => {
+      const permitidas = turmasDoUsuario(claims);
+      const turmaId = params.get('turmaId');
+      const status = params.get('status') as StatusAluno | null;
+
+      const lista = mockStore.alunos
+        .all()
+        .filter((a) => permitidas.has(a.turmaId))
+        .filter((a) => !turmaId || a.turmaId === turmaId)
+        .filter((a) => !status || a.status === status)
+        .map(comTurma)
+        .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+
+      return ok(lista);
+    };
+  }
+
+  if (path === '/alunos' && method === 'POST') {
+    return (claims, body) => {
+      const dto = body as AlunoCreate;
+      if (!turmasDoUsuario(claims).has(dto.turmaId))
+        return erro(403, 'Turma fora do seu acesso');
+      const novo: Aluno = { ...dto, id: crypto.randomUUID(), status: 'ATIVO' };
+      mockStore.alunos.replace([...mockStore.alunos.all(), novo]);
+      return ok(comTurma(novo), 201);
+    };
+  }
+
+  const mId = path.match(/^\/alunos\/([^/]+)$/);
+  if (mId) {
+    const id = mId[1];
+
+    if (method === 'PUT') {
+      return (claims, body) => {
+        const lista = mockStore.alunos.all();
+        const idx = lista.findIndex((a) => a.id === id);
+        if (idx < 0) return erro(404, 'Aluno não encontrado');
+        const permitidas = turmasDoUsuario(claims);
+        const dto = body as AlunoUpdate;
+        if (!permitidas.has(lista[idx].turmaId) || !permitidas.has(dto.turmaId))
+          return erro(403, 'Aluno fora do seu acesso');
+        lista[idx] = { ...lista[idx], ...dto, id };
+        mockStore.alunos.replace(lista);
+        return ok(comTurma(lista[idx]));
+      };
+    }
+
+    if (method === 'DELETE') {
+      return (claims) => {
+        if (claims.papel !== 'DIRETORA')
+          return erro(403, 'Somente a diretora pode excluir alunos');
+        const lista = mockStore.alunos.all();
+        if (!lista.some((a) => a.id === id))
+          return erro(404, 'Aluno não encontrado');
+        mockStore.alunos.replace(lista.filter((a) => a.id !== id));
+        return ok(null, 204);
+      };
+    }
+  }
+
+  const mStatus = path.match(/^\/alunos\/([^/]+)\/status$/);
+  if (mStatus && method === 'PATCH') {
+    const id = mStatus[1];
+    return (claims, body) => {
+      const lista = mockStore.alunos.all();
+      const idx = lista.findIndex((a) => a.id === id);
+      if (idx < 0) return erro(404, 'Aluno não encontrado');
+      if (!turmasDoUsuario(claims).has(lista[idx].turmaId))
+        return erro(403, 'Aluno fora do seu acesso');
+      lista[idx] = {
+        ...lista[idx],
+        status: (body as { status: StatusAluno }).status,
+      };
+      mockStore.alunos.replace(lista);
+      return ok(comTurma(lista[idx]));
+    };
   }
 
   return null;

@@ -1,35 +1,217 @@
-import { Component } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { MatTableModule } from '@angular/material/table';
+import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
+
+import { AuthService } from '../../core/auth/auth.service';
+import { AlunosService } from '../../core/services/alunos.service';
+import { TurmasService } from '../../core/services/turmas.service';
+import { Turma } from '../../core/models/turma.model';
+import {
+  Aluno,
+  STATUS_ALUNO,
+  STATUS_ALUNO_LABEL,
+  StatusAluno,
+} from '../../core/models/aluno.model';
+import {
+  ConfirmDialog,
+  ConfirmDialogData,
+} from '../../shared/confirm-dialog/confirm-dialog';
+import {
+  AlunoFormData,
+  AlunoFormDialog,
+  AlunoFormResult,
+} from './aluno-form-dialog/aluno-form-dialog';
 
 @Component({
   selector: 'app-alunos',
-  imports: [MatIconModule],
-  template: `
-    <section class="feature-stub">
-      <mat-icon>badge</mat-icon>
-      <h2>Alunos</h2>
-      <p>Módulo em construção.</p>
-    </section>
-  `,
-  styles: `
-    .feature-stub {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 3rem 1rem;
-      color: var(--mat-sys-on-surface-variant, #6b7280);
-      text-align: center;
-    }
-    .feature-stub mat-icon {
-      font-size: 2.5rem;
-      width: 2.5rem;
-      height: 2.5rem;
-    }
-    .feature-stub h2 {
-      margin: 0;
-      color: var(--mat-sys-on-surface, #1f2937);
-    }
-  `,
+  imports: [
+    DatePipe,
+    FormsModule,
+    MatTableModule,
+    MatButtonModule,
+    MatIconModule,
+    MatMenuModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatProgressBarModule,
+    MatTooltipModule,
+  ],
+  templateUrl: './alunos.html',
+  styleUrl: './alunos.scss',
 })
-export class Alunos {}
+export class Alunos {
+  private readonly alunosService = inject(AlunosService);
+  private readonly turmasService = inject(TurmasService);
+  private readonly auth = inject(AuthService);
+  private readonly dialog = inject(MatDialog);
+  private readonly snack = inject(MatSnackBar);
+
+  readonly statusOpcoes = STATUS_ALUNO;
+  readonly statusLabel = STATUS_ALUNO_LABEL;
+  readonly colunas = ['nome', 'turma', 'nascimento', 'status', 'acoes'];
+
+  readonly turmas = signal<Turma[]>([]);
+  readonly alunos = signal<Aluno[]>([]);
+  readonly carregando = signal(true);
+  readonly erro = signal<string | null>(null);
+
+  filtroTurma = '';
+  filtroStatus: StatusAluno | '' = 'ATIVO';
+
+  readonly podeExcluir = computed(() => this.auth.hasPapel('DIRETORA'));
+
+  constructor() {
+    this.turmasService.listar().subscribe((l) => this.turmas.set(l));
+    this.carregar();
+  }
+
+  carregar(): void {
+    this.carregando.set(true);
+    this.erro.set(null);
+    this.alunosService
+      .listar({
+        turmaId: this.filtroTurma || undefined,
+        status: this.filtroStatus || undefined,
+      })
+      .subscribe({
+        next: (lista) => {
+          this.alunos.set(lista);
+          this.carregando.set(false);
+        },
+        error: () => {
+          this.erro.set('Não foi possível carregar os alunos.');
+          this.carregando.set(false);
+        },
+      });
+  }
+
+  idade(a: Aluno): string {
+    const nasc = new Date(`${a.dataNascimento}T00:00:00`);
+    if (isNaN(nasc.getTime())) return '';
+    const hoje = new Date();
+    let anos = hoje.getFullYear() - nasc.getFullYear();
+    const m = hoje.getMonth() - nasc.getMonth();
+    if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) anos--;
+    return `${anos} ano${anos === 1 ? '' : 's'}`;
+  }
+
+  rotuloStatus(a: Aluno): string {
+    return STATUS_ALUNO_LABEL[a.status];
+  }
+
+  classeStatus(a: Aluno): string {
+    return `chip chip--${a.status.toLowerCase()}`;
+  }
+
+  novo(): void {
+    this.abrirForm();
+  }
+
+  editar(aluno: Aluno): void {
+    this.abrirForm(aluno);
+  }
+
+  mudarStatus(aluno: Aluno, status: StatusAluno): void {
+    if (status === aluno.status) return;
+
+    const sair = status !== 'ATIVO';
+    const aplicar = () =>
+      this.alunosService.alterarStatus(aluno.id, status).subscribe({
+        next: () => {
+          this.snack.open(
+            `${aluno.nome} agora está ${STATUS_ALUNO_LABEL[status].toLowerCase()}.`,
+            undefined,
+            { duration: 2500 },
+          );
+          this.carregar();
+        },
+        error: () =>
+          this.snack.open('Não foi possível alterar.', undefined, {
+            duration: 3000,
+          }),
+      });
+
+    if (!sair) {
+      aplicar();
+      return;
+    }
+
+    const dados: ConfirmDialogData = {
+      titulo: `Marcar como ${STATUS_ALUNO_LABEL[status].toLowerCase()}`,
+      mensagem: `${aluno.nome} sai da chamada ativa, mas todo o histórico é mantido. Confirmar?`,
+      confirmar: STATUS_ALUNO_LABEL[status],
+    };
+    this.dialog
+      .open(ConfirmDialog, { data: dados })
+      .afterClosed()
+      .subscribe((ok) => ok && aplicar());
+  }
+
+  excluir(aluno: Aluno): void {
+    const dados: ConfirmDialogData = {
+      titulo: 'Excluir aluno',
+      mensagem: `Excluir "${aluno.nome}" apaga o cadastro e o histórico. Para tirar da chamada sem perder o histórico, use "Transferido". Excluir mesmo assim?`,
+      confirmar: 'Excluir',
+      perigo: true,
+    };
+    this.dialog
+      .open(ConfirmDialog, { data: dados })
+      .afterClosed()
+      .subscribe((ok) => {
+        if (!ok) return;
+        this.alunosService.remover(aluno.id).subscribe({
+          next: () => {
+            this.snack.open('Aluno excluído.', undefined, { duration: 2500 });
+            this.carregar();
+          },
+          error: () =>
+            this.snack.open('Não foi possível excluir.', undefined, {
+              duration: 3000,
+            }),
+        });
+      });
+  }
+
+  private abrirForm(aluno?: Aluno): void {
+    const data: AlunoFormData = {
+      aluno,
+      turmaIdInicial: this.filtroTurma || undefined,
+    };
+    this.dialog
+      .open(AlunoFormDialog, { data })
+      .afterClosed()
+      .subscribe((res: AlunoFormResult | undefined) => {
+        if (!res) return;
+        const req = aluno
+          ? this.alunosService.atualizar(aluno.id, {
+              ...res.dados,
+              status: res.status,
+            })
+          : this.alunosService.criar(res.dados);
+        req.subscribe({
+          next: () => {
+            this.snack.open(
+              aluno ? 'Aluno atualizado.' : 'Aluno cadastrado.',
+              undefined,
+              { duration: 2500 },
+            );
+            this.carregar();
+          },
+          error: () =>
+            this.snack.open('Não foi possível salvar.', undefined, {
+              duration: 3000,
+            }),
+        });
+      });
+  }
+}

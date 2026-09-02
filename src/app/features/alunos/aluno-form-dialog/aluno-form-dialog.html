@@ -1,0 +1,84 @@
+<h2 mat-dialog-title>{{ edicao ? 'Editar aluno' : 'Novo aluno' }}</h2>
+
+<mat-dialog-content>
+  <form class="form" [formGroup]="form" (ngSubmit)="salvar()">
+    <mat-form-field class="col-2">
+      <mat-label>Nome completo</mat-label>
+      <input matInput formControlName="nome" />
+      @if (form.controls.nome.touched && form.controls.nome.invalid) {
+        <mat-error>Informe o nome.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Data de nascimento</mat-label>
+      <input matInput [matDatepicker]="dp" formControlName="dataNascimento" />
+      <mat-datepicker-toggle matIconSuffix [for]="dp" />
+      <mat-datepicker #dp />
+      @if (form.controls.dataNascimento.touched && form.controls.dataNascimento.invalid) {
+        <mat-error>Informe a data.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>CPF (opcional)</mat-label>
+      <input matInput formControlName="cpf" inputmode="numeric" maxlength="11" />
+      @if (form.controls.cpf.invalid) {
+        <mat-error>Use 11 dígitos, só números.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Nome da mãe</mat-label>
+      <input matInput formControlName="nomeMae" />
+      @if (form.controls.nomeMae.touched && form.controls.nomeMae.invalid) {
+        <mat-error>Informe o nome da mãe.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Nome do pai</mat-label>
+      <input matInput formControlName="nomePai" />
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Local de nascimento</mat-label>
+      <input matInput formControlName="localNascimento" placeholder="Cidade - UF" />
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Turma</mat-label>
+      <mat-select formControlName="turmaId">
+        @for (t of turmas(); track t.id) {
+          <mat-option [value]="t.id">{{ t.nome }}</mat-option>
+        }
+      </mat-select>
+      @if (form.controls.turmaId.touched && form.controls.turmaId.invalid) {
+        <mat-error>Selecione a turma.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field class="col-2">
+      <mat-label>Endereço</mat-label>
+      <input matInput formControlName="endereco" />
+    </mat-form-field>
+
+    @if (edicao) {
+      <mat-form-field>
+        <mat-label>Situação</mat-label>
+        <mat-select formControlName="status">
+          @for (s of statusOpcoes; track s) {
+            <mat-option [value]="s">{{ statusLabel[s] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancelar</button>
+  <button mat-flat-button color="primary" (click)="salvar()">
+    {{ edicao ? 'Salvar' : 'Cadastrar' }}
+  </button>
+</mat-dialog-actions>
