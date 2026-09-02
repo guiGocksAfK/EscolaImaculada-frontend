@@ -1,0 +1,111 @@
+<header class="page-head">
+  <div>
+    <h1>Alunos</h1>
+    <p>Cadastro dos alunos e situação de matrícula.</p>
+  </div>
+  <button mat-flat-button color="primary" (click)="novo()">
+    <mat-icon>add</mat-icon>
+    Novo aluno
+  </button>
+</header>
+
+<div class="filtros">
+  <mat-form-field>
+    <mat-label>Turma</mat-label>
+    <mat-select [(ngModel)]="filtroTurma" (ngModelChange)="carregar()">
+      <mat-option value="">Todas</mat-option>
+      @for (t of turmas(); track t.id) {
+        <mat-option [value]="t.id">{{ t.nome }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field>
+    <mat-label>Situação</mat-label>
+    <mat-select [(ngModel)]="filtroStatus" (ngModelChange)="carregar()">
+      <mat-option value="">Todas</mat-option>
+      @for (s of statusOpcoes; track s) {
+        <mat-option [value]="s">{{ statusLabel[s] }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</div>
+
+@if (carregando()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (erro()) {
+  <p class="erro">{{ erro() }}</p>
+  <button mat-stroked-button (click)="carregar()">Tentar de novo</button>
+}
+
+@if (!carregando() && !erro()) {
+  @if (alunos().length === 0) {
+    <div class="vazio">
+      <mat-icon>badge</mat-icon>
+      <p>Nenhum aluno com esses filtros.</p>
+    </div>
+  } @else {
+    <table mat-table [dataSource]="alunos()" class="tabela">
+      <ng-container matColumnDef="nome">
+        <th mat-header-cell *matHeaderCellDef>Aluno</th>
+        <td mat-cell *matCellDef="let a">
+          <div class="nome">{{ a.nome }}</div>
+          <div class="sub">mãe: {{ a.nomeMae || '—' }}</div>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="turma">
+        <th mat-header-cell *matHeaderCellDef>Turma</th>
+        <td mat-cell *matCellDef="let a">{{ a.turma?.nome ?? '—' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="nascimento">
+        <th mat-header-cell *matHeaderCellDef>Nascimento</th>
+        <td mat-cell *matCellDef="let a">
+          {{ a.dataNascimento | date: 'dd/MM/yyyy' }}
+          <span class="sub">({{ idade(a) }})</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Situação</th>
+        <td mat-cell *matCellDef="let a">
+          <span [class]="classeStatus(a)">{{ rotuloStatus(a) }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="acoes">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let a" class="col-acoes">
+          <button mat-icon-button matTooltip="Editar" (click)="editar(a)">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button matTooltip="Situação" [matMenuTriggerFor]="menu">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #menu="matMenu">
+            @for (s of statusOpcoes; track s) {
+              <button
+                mat-menu-item
+                [disabled]="s === a.status"
+                (click)="mudarStatus(a, s)"
+              >
+                Marcar como {{ statusLabel[s].toLowerCase() }}
+              </button>
+            }
+            @if (podeExcluir()) {
+              <button mat-menu-item class="perigo" (click)="excluir(a)">
+                Excluir cadastro
+              </button>
+            }
+          </mat-menu>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="colunas"></tr>
+      <tr mat-row *matRowDef="let row; columns: colunas"></tr>
+    </table>
+  }
+}
