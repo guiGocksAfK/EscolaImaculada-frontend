@@ -1,0 +1,49 @@
+<h2 mat-dialog-title>{{ edicao ? 'Editar turma' : 'Nova turma' }}</h2>
+
+<mat-dialog-content>
+  <form class="form" [formGroup]="form" (ngSubmit)="salvar()">
+    <mat-form-field>
+      <mat-label>Nome / identificação</mat-label>
+      <input matInput formControlName="nome" placeholder="Ex: Infantil 5 - Tarde" />
+      @if (form.controls.nome.touched && form.controls.nome.invalid) {
+        <mat-error>Informe um nome (até 80 caracteres).</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Período</mat-label>
+      <mat-select formControlName="periodo">
+        @for (p of periodos; track p) {
+          <mat-option [value]="p">{{ periodoLabel[p] }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Ano letivo</mat-label>
+      <input matInput type="number" formControlName="anoLetivo" />
+      @if (form.controls.anoLetivo.touched && form.controls.anoLetivo.invalid) {
+        <mat-error>Ano inválido.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Professora responsável</mat-label>
+      <mat-select formControlName="professoraId">
+        @for (prof of professoras(); track prof.id) {
+          <mat-option [value]="prof.id">{{ prof.nome }}</mat-option>
+        }
+      </mat-select>
+      @if (form.controls.professoraId.touched && form.controls.professoraId.invalid) {
+        <mat-error>Selecione a professora.</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancelar</button>
+  <button mat-flat-button color="primary" (click)="salvar()">
+    {{ edicao ? 'Salvar' : 'Criar' }}
+  </button>
+</mat-dialog-actions>

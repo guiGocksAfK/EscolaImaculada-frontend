@@ -1,0 +1,44 @@
+// Angular Material theming (Material 3).
+// https://material.angular.dev/guide/theming
+@use '@angular/material' as mat;
+
+// Fontes self-hosted (funcionam offline / sem CDN) — ver angular.json > styles.
+
+html {
+  height: 100%;
+  color-scheme: light;
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background-color: var(--mat-sys-surface-container-low, #f4f6f9);
+  color: var(--mat-sys-on-surface, #1f2937);
+  font: var(--mat-sys-body-medium);
+}
+
+a {
+  color: inherit;
+}
+
+:root {
+  --app-content-max: 1200px;
+}
