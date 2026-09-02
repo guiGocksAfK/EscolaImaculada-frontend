@@ -4,7 +4,7 @@ import { RegistroChamada } from '../../models/chamada.model';
 import { FaltaJustificada } from '../../models/falta-justificada.model';
 import { RegistroConteudo } from '../../models/conteudo.model';
 import { Avaliacao } from '../../models/avaliacao.model';
-import { MOCK_ESCOLA_ID, MOCK_USERS } from './mock-users';
+import { MOCK_ESCOLA_ID, MOCK_USERS, MockUser } from './mock-users';
 
 /**
  * "Banco" fake em localStorage para os módulos funcionarem sem back-end.
@@ -203,6 +203,10 @@ function seedAvaliacoes(): Avaliacao[] {
 }
 
 export const mockStore = {
+  usuarios: {
+    all: (): MockUser[] => load('usuarios', () => MOCK_USERS.map((u) => ({ ...u }))),
+    replace: (dados: MockUser[]): void => save('usuarios', dados),
+  },
   turmas: {
     all: (): Turma[] => load('turmas', seedTurmas),
     replace: (dados: Turma[]): void => save('turmas', dados),

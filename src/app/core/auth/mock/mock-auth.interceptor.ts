@@ -3,7 +3,8 @@ import { delay, dematerialize, materialize, of, throwError } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import { LoginRequest, LoginResponse } from '../auth.models';
-import { MOCK_USERS, fakeJwt } from './mock-users';
+import { fakeJwt } from './mock-users';
+import { mockStore } from './mock-store';
 
 /**
  * Intercepta `POST {apiUrl}/auth/login` e responde com um usuário fake enquanto
@@ -22,9 +23,9 @@ export const mockAuthInterceptor: HttpInterceptorFn = (req, next) => {
 
   const { cpf, senha } = (req.body ?? {}) as Partial<LoginRequest>;
   const somenteDigitos = (cpf ?? '').replace(/\D/g, '');
-  const user = MOCK_USERS.find(
-    (u) => u.cpf === somenteDigitos && u.senha === senha,
-  );
+  const user = mockStore.usuarios
+    .all()
+    .find((u) => u.cpf === somenteDigitos && u.senha === senha);
 
   const resposta = user
     ? of(

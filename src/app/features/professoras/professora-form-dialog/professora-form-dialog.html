@@ -1,0 +1,61 @@
+<h2 mat-dialog-title>{{ edicao ? 'Editar professora' : 'Nova professora' }}</h2>
+
+<mat-dialog-content>
+  <form class="form" [formGroup]="form" (ngSubmit)="salvar()">
+    <mat-form-field>
+      <mat-label>Nome completo</mat-label>
+      <input matInput formControlName="nome" />
+      @if (form.controls.nome.touched && form.controls.nome.invalid) {
+        <mat-error>Informe o nome.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>CPF (usado no login)</mat-label>
+      <input matInput formControlName="cpf" inputmode="numeric" maxlength="11" />
+      @if (form.controls.cpf.touched && form.controls.cpf.invalid) {
+        <mat-error>Use 11 dígitos, só números.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Data de nascimento</mat-label>
+      <input matInput [matDatepicker]="dp" formControlName="dataNascimento" />
+      <mat-datepicker-toggle matIconSuffix [for]="dp" />
+      <mat-datepicker #dp />
+      @if (form.controls.dataNascimento.touched && form.controls.dataNascimento.invalid) {
+        <mat-error>Informe a data.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>{{ edicao ? 'Nova senha (opcional)' : 'Senha' }}</mat-label>
+      <input
+        matInput
+        [type]="esconderSenha ? 'password' : 'text'"
+        formControlName="senha"
+        autocomplete="new-password"
+      />
+      <button
+        type="button"
+        mat-icon-button
+        matSuffix
+        (click)="esconderSenha = !esconderSenha"
+        [attr.aria-label]="esconderSenha ? 'Mostrar' : 'Ocultar'"
+      >
+        <mat-icon>{{ esconderSenha ? 'visibility' : 'visibility_off' }}</mat-icon>
+      </button>
+      <mat-hint>{{ edicao ? 'Deixe em branco para manter a atual.' : 'Mínimo 6 caracteres.' }}</mat-hint>
+      @if (form.controls.senha.touched && form.controls.senha.invalid) {
+        <mat-error>Mínimo 6 caracteres.</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancelar</button>
+  <button mat-flat-button color="primary" (click)="salvar()">
+    {{ edicao ? 'Salvar' : 'Cadastrar' }}
+  </button>
+</mat-dialog-actions>
