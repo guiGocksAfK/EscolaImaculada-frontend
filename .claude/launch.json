@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["start"],
       "port": 4200
+    },
+    {
+      "name": "dev-preview",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start", "--", "--port", "4310"],
+      "port": 4310
     }
   ]
 }
