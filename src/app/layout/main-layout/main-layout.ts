@@ -20,11 +20,6 @@ const NAV: NavItem[] = [
   { label: 'Chamada', icon: 'fact_check', path: '/chamada' },
   { label: 'Conteúdo', icon: 'menu_book', path: '/conteudo' },
   { label: 'Avaliações', icon: 'rate_review', path: '/avaliacoes' },
-  {
-    label: 'Faltas justificadas',
-    icon: 'event_busy',
-    path: '/faltas-justificadas',
-  },
   { label: 'Relatórios', icon: 'assessment', path: '/relatorios' },
   {
     label: 'Professoras',
