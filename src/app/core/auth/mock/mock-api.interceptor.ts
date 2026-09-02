@@ -38,6 +38,7 @@ import {
   RegistroConteudoCreate,
 } from '../../models/conteudo.model';
 import { Avaliacao, AvaliacaoCreate } from '../../models/avaliacao.model';
+import { RelatorioResumo, ResumoAluno } from '../../models/relatorio.model';
 import { MOCK_USERS } from './mock-users';
 import { mockStore } from './mock-store';
 
@@ -127,7 +128,8 @@ function rotas(path: string, method: string): Handler | null {
     rotaChamada(path, method) ??
     rotaFaltas(path, method) ??
     rotaConteudo(path, method) ??
-    rotaAvaliacoes(path, method)
+    rotaAvaliacoes(path, method) ??
+    rotaRelatorios(path, method)
   );
 }
 
@@ -586,6 +588,62 @@ function rotaAvaliacoes(path: string, method: string): Handler | null {
         return ok(null, 204);
       };
     }
+  }
+
+  return null;
+}
+
+function rotaRelatorios(path: string, method: string): Handler | null {
+  if (path === '/relatorios/resumo' && method === 'GET') {
+    return (claims, _body, params) => {
+      const turmaId = params.get('turmaId') ?? '';
+      const ano = Number(params.get('ano'));
+      if (!turmasDoUsuario(claims).has(turmaId))
+        return erro(403, 'Turma fora do seu acesso');
+
+      const turma = mockStore.turmas.all().find((t) => t.id === turmaId);
+      const prefixoAno = `${ano}-`;
+
+      const chamada = mockStore.chamada
+        .all()
+        .filter((r) => r.turmaId === turmaId && r.data.startsWith(prefixoAno));
+      const diasLancados = new Set(chamada.map((r) => r.data)).size;
+
+      const faltasJust = mockStore.faltasJustificadas
+        .all()
+        .filter((f) => f.data.startsWith(prefixoAno));
+      const avaliacoes = mockStore.avaliacoes
+        .all()
+        .filter((a) => a.turmaId === turmaId);
+
+      const alunos = mockStore.alunos
+        .all()
+        .filter((a) => a.turmaId === turmaId && a.status === 'ATIVO')
+        .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+
+      const linhas: ResumoAluno[] = alunos.map((al) => {
+        const dele = chamada.filter((r) => r.alunoId === al.id);
+        return {
+          alunoId: al.id,
+          alunoNome: al.nome,
+          presencas: dele.filter((r) => r.status === 'C').length,
+          faltas: dele.filter((r) => r.status === 'F').length,
+          faltasJustificadas: faltasJust.filter((f) => f.alunoId === al.id)
+            .length,
+          avaliacoes: avaliacoes
+            .filter((a) => a.alunoId === al.id)
+            .map((a) => ({ referencia: a.referencia, texto: a.texto })),
+        };
+      });
+
+      return ok<RelatorioResumo>({
+        turmaId,
+        turmaNome: turma?.nome ?? '',
+        ano,
+        diasLancados,
+        linhas,
+      });
+    };
   }
 
   return null;

@@ -1,34 +1,29 @@
 import { Component } from '@angular/core';
-import { MatIconModule } from '@angular/material/icon';
+import { MatTabsModule } from '@angular/material/tabs';
+
+import { ResumoAnual } from './resumo-anual/resumo-anual';
+import { ExportChamada } from './export-chamada/export-chamada';
 
 @Component({
   selector: 'app-relatorios',
-  imports: [MatIconModule],
+  imports: [MatTabsModule, ResumoAnual, ExportChamada],
   template: `
-    <section class="feature-stub">
-      <mat-icon>assessment</mat-icon>
-      <h2>Relatórios e exportação</h2>
-      <p>Módulo em construção.</p>
-    </section>
+    <h1>Relatórios</h1>
+    <mat-tab-group>
+      <mat-tab label="Resumo por aluno">
+        <app-resumo-anual />
+      </mat-tab>
+      <mat-tab label="Chamada mensal (PDF)">
+        <app-export-chamada />
+      </mat-tab>
+    </mat-tab-group>
   `,
   styles: `
-    .feature-stub {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 3rem 1rem;
-      color: var(--mat-sys-on-surface-variant, #6b7280);
-      text-align: center;
+    h1 {
+      margin: 0 0 0.75rem;
     }
-    .feature-stub mat-icon {
-      font-size: 2.5rem;
-      width: 2.5rem;
-      height: 2.5rem;
-    }
-    .feature-stub h2 {
-      margin: 0;
-      color: var(--mat-sys-on-surface, #1f2937);
+    :host ::ng-deep .mat-mdc-tab-body-content {
+      padding: 1.25rem 0.25rem;
     }
   `,
 })
