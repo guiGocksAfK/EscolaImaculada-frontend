@@ -1,0 +1,49 @@
+<h2 mat-dialog-title>{{ edicao ? 'Editar registro' : 'Novo registro de conteúdo' }}</h2>
+
+<mat-dialog-content>
+  <form class="form" [formGroup]="form" (ngSubmit)="salvar()">
+    <div class="linha">
+      <mat-form-field>
+        <mat-label>Turma</mat-label>
+        <mat-select formControlName="turmaId">
+          @for (t of turmas(); track t.id) {
+            <mat-option [value]="t.id">{{ t.nome }}</mat-option>
+          }
+        </mat-select>
+        @if (form.controls.turmaId.touched && form.controls.turmaId.invalid) {
+          <mat-error>Selecione a turma.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Data</mat-label>
+        <input matInput [matDatepicker]="dp" formControlName="data" />
+        <mat-datepicker-toggle matIconSuffix [for]="dp" />
+        <mat-datepicker #dp />
+        @if (form.controls.data.touched && form.controls.data.invalid) {
+          <mat-error>Informe a data.</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <mat-form-field>
+      <mat-label>Conteúdo trabalhado</mat-label>
+      <textarea
+        matInput
+        formControlName="conteudo"
+        rows="6"
+        placeholder="Atividades, temas, histórias, brincadeiras dirigidas…"
+      ></textarea>
+      @if (form.controls.conteudo.touched && form.controls.conteudo.invalid) {
+        <mat-error>Descreva o conteúdo da aula.</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancelar</button>
+  <button mat-flat-button color="primary" (click)="salvar()">
+    {{ edicao ? 'Salvar' : 'Registrar' }}
+  </button>
+</mat-dialog-actions>
