@@ -1,0 +1,56 @@
+<header class="head">
+  <div>
+    <h1>Conteúdo das aulas</h1>
+    <p>O que foi trabalhado em cada dia, por turma.</p>
+  </div>
+  <button mat-flat-button color="primary" (click)="novo()">
+    <mat-icon>add</mat-icon>
+    Novo registro
+  </button>
+</header>
+
+<mat-form-field class="filtro">
+  <mat-label>Turma</mat-label>
+  <mat-select [(ngModel)]="filtroTurma" (ngModelChange)="carregar()">
+    <mat-option value="">Todas</mat-option>
+    @for (t of turmas(); track t.id) {
+      <mat-option [value]="t.id">{{ t.nome }}</mat-option>
+    }
+  </mat-select>
+</mat-form-field>
+
+@if (carregando()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (erro()) {
+  <p class="erro">{{ erro() }}</p>
+}
+
+@if (!carregando() && !erro()) {
+  @if (registros().length === 0) {
+    <div class="vazio">
+      <mat-icon>menu_book</mat-icon>
+      <p>Nenhum conteúdo registrado ainda.</p>
+    </div>
+  } @else {
+    <ul class="lista">
+      @for (r of registros(); track r.id) {
+        <li>
+          <div class="meta">
+            <span class="data">{{ r.data | date: 'dd/MM/yyyy' }}</span>
+            <span class="turma">{{ r.turma?.nome ?? '—' }}</span>
+            <span class="spacer"></span>
+            <button mat-icon-button matTooltip="Editar" (click)="editar(r)">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button matTooltip="Excluir" (click)="excluir(r)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+          <p class="texto">{{ r.conteudo }}</p>
+        </li>
+      }
+    </ul>
+  }
+}

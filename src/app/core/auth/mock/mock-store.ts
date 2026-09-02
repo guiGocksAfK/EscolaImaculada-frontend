@@ -2,6 +2,7 @@ import { Turma } from '../../models/turma.model';
 import { Aluno } from '../../models/aluno.model';
 import { RegistroChamada } from '../../models/chamada.model';
 import { FaltaJustificada } from '../../models/falta-justificada.model';
+import { RegistroConteudo } from '../../models/conteudo.model';
 import { MOCK_ESCOLA_ID, MOCK_USERS } from './mock-users';
 
 /**
@@ -141,6 +142,34 @@ function seedFaltas(): FaltaJustificada[] {
   ];
 }
 
+// ---- Conteúdo das aulas ----------------------------------------------
+
+function seedConteudo(): RegistroConteudo[] {
+  return [
+    {
+      id: 'ct-1',
+      turmaId: 't-1',
+      data: '2026-08-31',
+      conteudo:
+        'Roda de conversa sobre o fim de semana. Atividade de coordenação motora com massinha. Contação da história "O Grúfalo".',
+    },
+    {
+      id: 'ct-2',
+      turmaId: 't-1',
+      data: '2026-09-01',
+      conteudo:
+        'Reconhecimento das vogais A e E. Pintura com guache do tema "minha família". Brincadeira dirigida no pátio.',
+    },
+    {
+      id: 'ct-3',
+      turmaId: 't-2',
+      data: '2026-09-01',
+      conteudo:
+        'Sequência numérica de 1 a 10 com material dourado. Ensaio da apresentação da primavera.',
+    },
+  ];
+}
+
 export const mockStore = {
   turmas: {
     all: (): Turma[] => load('turmas', seedTurmas),
@@ -158,5 +187,9 @@ export const mockStore = {
     all: (): FaltaJustificada[] => load('faltasJustificadas', seedFaltas),
     replace: (dados: FaltaJustificada[]): void =>
       save('faltasJustificadas', dados),
+  },
+  conteudo: {
+    all: (): RegistroConteudo[] => load('conteudo', seedConteudo),
+    replace: (dados: RegistroConteudo[]): void => save('conteudo', dados),
   },
 };

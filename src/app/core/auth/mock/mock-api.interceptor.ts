@@ -33,6 +33,10 @@ import {
   FaltaJustificada,
   FaltaJustificadaCreate,
 } from '../../models/falta-justificada.model';
+import {
+  RegistroConteudo,
+  RegistroConteudoCreate,
+} from '../../models/conteudo.model';
 import { MOCK_USERS } from './mock-users';
 import { mockStore } from './mock-store';
 
@@ -120,7 +124,8 @@ function rotas(path: string, method: string): Handler | null {
     rotaTurmas(path, method) ??
     rotaAlunos(path, method) ??
     rotaChamada(path, method) ??
-    rotaFaltas(path, method)
+    rotaFaltas(path, method) ??
+    rotaConteudo(path, method)
   );
 }
 
@@ -433,6 +438,72 @@ function rotaFaltas(path: string, method: string): Handler | null {
         if (!podeMexer(claims, alvo.alunoId))
           return erro(403, 'Fora do seu acesso');
         mockStore.faltasJustificadas.replace(dados.filter((f) => f.id !== id));
+        return ok(null, 204);
+      };
+    }
+  }
+
+  return null;
+}
+
+function rotaConteudo(path: string, method: string): Handler | null {
+  const comNomeTurma = (r: RegistroConteudo): RegistroConteudo => {
+    const t = mockStore.turmas.all().find((x) => x.id === r.turmaId);
+    return { ...r, turma: t ? { id: t.id, nome: t.nome } : undefined };
+  };
+
+  if (path === '/conteudo' && method === 'GET') {
+    return (claims, _body, params) => {
+      const permitidas = turmasDoUsuario(claims);
+      const turmaId = params.get('turmaId');
+      const lista = mockStore.conteudo
+        .all()
+        .filter((r) => permitidas.has(r.turmaId))
+        .filter((r) => !turmaId || r.turmaId === turmaId)
+        .map(comNomeTurma)
+        .sort((a, b) => b.data.localeCompare(a.data));
+      return ok(lista);
+    };
+  }
+
+  if (path === '/conteudo' && method === 'POST') {
+    return (claims, body) => {
+      const dto = body as RegistroConteudoCreate;
+      if (!turmasDoUsuario(claims).has(dto.turmaId))
+        return erro(403, 'Turma fora do seu acesso');
+      const novo: RegistroConteudo = { ...dto, id: crypto.randomUUID() };
+      mockStore.conteudo.replace([...mockStore.conteudo.all(), novo]);
+      return ok(comNomeTurma(novo), 201);
+    };
+  }
+
+  const m = path.match(/^\/conteudo\/([^/]+)$/);
+  if (m) {
+    const id = m[1];
+
+    if (method === 'PUT') {
+      return (claims, body) => {
+        const dados = mockStore.conteudo.all();
+        const idx = dados.findIndex((r) => r.id === id);
+        if (idx < 0) return erro(404, 'Registro não encontrado');
+        const dto = body as RegistroConteudoCreate;
+        const permitidas = turmasDoUsuario(claims);
+        if (!permitidas.has(dados[idx].turmaId) || !permitidas.has(dto.turmaId))
+          return erro(403, 'Turma fora do seu acesso');
+        dados[idx] = { ...dados[idx], ...dto, id };
+        mockStore.conteudo.replace(dados);
+        return ok(comNomeTurma(dados[idx]));
+      };
+    }
+
+    if (method === 'DELETE') {
+      return (claims) => {
+        const dados = mockStore.conteudo.all();
+        const alvo = dados.find((r) => r.id === id);
+        if (!alvo) return erro(404, 'Registro não encontrado');
+        if (!turmasDoUsuario(claims).has(alvo.turmaId))
+          return erro(403, 'Turma fora do seu acesso');
+        mockStore.conteudo.replace(dados.filter((r) => r.id !== id));
         return ok(null, 204);
       };
     }
