@@ -27,6 +27,8 @@ nav {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
+  /* alinha o primeiro item do menu com o topo do conteúdo da página */
+  margin-top: 9px;
 }
 
 .nav-link {
