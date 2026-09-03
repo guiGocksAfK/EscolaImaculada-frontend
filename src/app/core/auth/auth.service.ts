@@ -11,7 +11,7 @@ import {
   LoginResponse,
   UsuarioAutenticado,
 } from './auth.models';
-import { Papel } from '../models/usuario.model';
+import { CadastroInicial, Papel } from '../models/usuario.model';
 
 const TOKEN_KEY = 'ei.token';
 
@@ -45,6 +45,13 @@ export class AuthService {
   login(body: LoginRequest): Observable<LoginResponse> {
     return this.http
       .post<LoginResponse>(`${environment.apiUrl}/auth/login`, body)
+      .pipe(tap((res) => this.setToken(res.accessToken)));
+  }
+
+  /** Bootstrap: cria a escola + a conta da diretora e já autentica. */
+  cadastroInicial(body: CadastroInicial): Observable<LoginResponse> {
+    return this.http
+      .post<LoginResponse>(`${environment.apiUrl}/auth/cadastro-inicial`, body)
       .pipe(tap((res) => this.setToken(res.accessToken)));
   }
 

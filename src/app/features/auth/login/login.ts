@@ -12,8 +12,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { AuthService } from '../../../core/auth/auth.service';
-import { environment } from '../../../../environments/environment';
-import { MOCK_LOGIN_DEFAULT } from '../../../core/auth/mock/mock-users';
 
 @Component({
   selector: 'app-login',
@@ -38,17 +36,10 @@ export class Login {
   readonly carregando = signal(false);
   readonly erro = signal<string | null>(null);
   readonly esconderSenha = signal(true);
-  readonly modoMock = environment.useMock;
 
   readonly form = this.fb.group({
-    cpf: [
-      this.modoMock ? MOCK_LOGIN_DEFAULT.cpf : '',
-      [Validators.required, Validators.minLength(11)],
-    ],
-    senha: [
-      this.modoMock ? MOCK_LOGIN_DEFAULT.senha : '',
-      [Validators.required],
-    ],
+    cpf: ['', [Validators.required, Validators.minLength(11)]],
+    senha: ['', [Validators.required]],
   });
 
   entrar(): void {
