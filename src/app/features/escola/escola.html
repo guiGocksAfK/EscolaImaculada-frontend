@@ -1,0 +1,48 @@
+<h1>Dados da escola</h1>
+<p class="sub">
+  Nome e endereço usados nos cabeçalhos dos relatórios impressos.
+</p>
+
+@if (carregando()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (erro()) {
+  <p class="erro">{{ erro() }}</p>
+  <button mat-stroked-button (click)="carregar()">Tentar de novo</button>
+}
+
+@if (!carregando() && !erro()) {
+  <form class="form" [formGroup]="form" (ngSubmit)="salvar()">
+    <mat-form-field>
+      <mat-label>Nome da escola</mat-label>
+      <input matInput formControlName="nome" />
+      @if (form.controls.nome.touched && form.controls.nome.invalid) {
+        <mat-error>Informe o nome.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Endereço</mat-label>
+      <textarea matInput formControlName="endereco" rows="2"></textarea>
+      @if (form.controls.endereco.touched && form.controls.endereco.invalid) {
+        <mat-error>Informe o endereço.</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="acoes">
+      <button
+        mat-flat-button
+        color="primary"
+        type="submit"
+        [disabled]="form.pristine || form.invalid || salvando()"
+      >
+        <mat-icon>save</mat-icon>
+        {{ salvando() ? 'Salvando…' : 'Salvar' }}
+      </button>
+      @if (!form.pristine) {
+        <button mat-button type="button" (click)="carregar()">Descartar</button>
+      }
+    </div>
+  </form>
+}
