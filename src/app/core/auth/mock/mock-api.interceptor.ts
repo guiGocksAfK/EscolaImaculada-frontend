@@ -39,6 +39,7 @@ import {
 } from '../../models/conteudo.model';
 import { Avaliacao, AvaliacaoCreate } from '../../models/avaliacao.model';
 import { RelatorioResumo, ResumoAluno } from '../../models/relatorio.model';
+import { Escola, EscolaUpdate } from '../../models/escola.model';
 import { MockUser } from './mock-users';
 import { mockStore } from './mock-store';
 
@@ -129,7 +130,8 @@ function rotas(path: string, method: string): Handler | null {
     rotaFaltas(path, method) ??
     rotaConteudo(path, method) ??
     rotaAvaliacoes(path, method) ??
-    rotaRelatorios(path, method)
+    rotaRelatorios(path, method) ??
+    rotaEscola(path, method)
   );
 }
 
@@ -737,6 +739,29 @@ function rotaRelatorios(path: string, method: string): Handler | null {
         diasLancados,
         linhas,
       });
+    };
+  }
+
+  return null;
+}
+
+function rotaEscola(path: string, method: string): Handler | null {
+  if (path === '/escola' && method === 'GET') {
+    return () => ok<Escola>(mockStore.escola.get());
+  }
+
+  if (path === '/escola' && method === 'PUT') {
+    return (claims, body) => {
+      if (claims.papel !== 'DIRETORA') return erro(403, 'Sem permissão');
+      const dto = body as EscolaUpdate;
+      const atual = mockStore.escola.get();
+      const atualizada: Escola = {
+        ...atual,
+        nome: dto.nome.trim(),
+        endereco: dto.endereco.trim(),
+      };
+      mockStore.escola.set(atualizada);
+      return ok<Escola>(atualizada);
     };
   }
 
