@@ -15,7 +15,11 @@
 .scroll {
   overflow-x: auto;
   border: 1px solid var(--mat-sys-outline-variant, #e5e7eb);
-  border-radius: 10px;
+  border-radius: 14px;
+}
+
+.grade thead th {
+  background: color-mix(in srgb, var(--mat-sys-primary, #1565c0) 5%, #fff);
 }
 
 .grade {

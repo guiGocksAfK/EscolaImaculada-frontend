@@ -111,3 +111,141 @@ a {
     transform: translateY(12px);
   }
 }
+
+/* ==== Padrão visual das telas (baseado no dashboard) ================== */
+
+/* Cabeçalho de página: título + subtítulo à esquerda, ação à direita */
+.page-head,
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+}
+
+.page-head h1,
+.head h1 {
+  margin: 0 0 0.2rem;
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+.page-head p,
+.head p {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant, #6b7280);
+  font-size: 0.9rem;
+}
+
+/* Barra de filtros acima do conteúdo */
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+/* Tabela dentro de um card, como os cards do dashboard */
+.tabela {
+  width: 100%;
+  background: var(--mat-sys-surface, #fff);
+  border: 1px solid var(--mat-sys-outline-variant, #e5e7eb);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.tabela .mat-mdc-header-row {
+  background: color-mix(
+    in srgb,
+    var(--mat-sys-primary, #1565c0) 4%,
+    transparent
+  );
+}
+
+.tabela .mat-mdc-header-cell {
+  font-weight: 600;
+  color: var(--mat-sys-on-surface-variant, #5f6b7a);
+}
+
+.tabela .mat-mdc-row {
+  transition: background 0.12s ease;
+}
+
+.tabela .mat-mdc-row:hover {
+  background: color-mix(
+    in srgb,
+    var(--mat-sys-primary, #1565c0) 5%,
+    transparent
+  );
+}
+
+.tabela .mat-mdc-cell,
+.tabela .mat-mdc-header-cell {
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+}
+
+/* Lista de cards (conteúdo, avaliações) */
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.lista > li {
+  background: var(--mat-sys-surface, #fff);
+  border: 1px solid var(--mat-sys-outline-variant, #e5e7eb);
+  border-radius: 14px;
+  padding: 0.9rem 1.1rem 1rem;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.lista > li:hover {
+  border-color: color-mix(
+    in srgb,
+    var(--mat-sys-primary, #1565c0) 40%,
+    var(--mat-sys-outline-variant, #e5e7eb)
+  );
+  box-shadow: 0 6px 18px rgba(21, 101, 192, 0.08);
+}
+
+/* Estado vazio: ícone num quadrado tonalizado (igual aos atalhos do dashboard) */
+.vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--mat-sys-on-surface-variant, #6b7280);
+  background: var(--mat-sys-surface, #fff);
+  border: 1px dashed var(--mat-sys-outline-variant, #cfd8dc);
+  border-radius: 14px;
+}
+
+.vazio mat-icon {
+  font-size: 1.8rem;
+  width: 1.8rem;
+  height: 1.8rem;
+  color: var(--mat-sys-primary, #1565c0);
+  padding: 0.7rem;
+  border-radius: 14px;
+  background: color-mix(
+    in srgb,
+    var(--mat-sys-primary, #1565c0) 12%,
+    transparent
+  );
+  box-sizing: content-box;
+}
+
+.erro {
+  color: var(--mat-sys-error, #b3261e);
+  margin: 0.5rem 0;
+}

@@ -1,37 +1,5 @@
-.page-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.5rem;
-
-  h1 {
-    margin: 0 0 0.15rem;
-  }
-
-  p {
-    margin: 0;
-    color: var(--mat-sys-on-surface-variant, #6b7280);
-    font-size: 0.9rem;
-  }
-}
-
-.filtros {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 0.5rem;
-
-  mat-form-field {
-    width: 200px;
-  }
-}
-
-.tabela {
-  width: 100%;
-  background: var(--mat-sys-surface, #fff);
-  border-radius: 10px;
-  overflow: hidden;
+.filtros mat-form-field {
+  width: 200px;
 }
 
 .nome {
@@ -74,25 +42,4 @@
 
 .perigo {
   color: var(--mat-sys-error, #b3261e);
-}
-
-.erro {
-  color: var(--mat-sys-error, #b3261e);
-  margin: 1rem 0 0.5rem;
-}
-
-.vazio {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 3rem 1rem;
-  color: var(--mat-sys-on-surface-variant, #6b7280);
-  text-align: center;
-
-  mat-icon {
-    font-size: 2.5rem;
-    width: 2.5rem;
-    height: 2.5rem;
-  }
 }
