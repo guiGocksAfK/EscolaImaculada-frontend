@@ -3,6 +3,19 @@ import autoTable from 'jspdf-autotable';
 
 import { RelatorioResumo } from '../models/relatorio.model';
 import { ChamadaMensal } from '../models/chamada.model';
+import { ROBOTO_REGULAR_BASE64 } from './roboto-font';
+
+const FONTE = 'Roboto';
+
+/**
+ * Registra a Roboto (Unicode) no documento. As fontes padrão do jsPDF são
+ * Latin-1 e quebram acentos (ã, º, —) — daí o embed da TTF.
+ */
+function usarFonteUnicode(doc: jsPDF): void {
+  doc.addFileToVFS('Roboto-Regular.ttf', ROBOTO_REGULAR_BASE64);
+  doc.addFont('Roboto-Regular.ttf', FONTE, 'normal');
+  doc.setFont(FONTE, 'normal');
+}
 
 const MESES = [
   'Janeiro',
@@ -31,6 +44,7 @@ function slug(s: string): string {
 }
 
 function cabecalho(doc: jsPDF, titulo: string, subtitulo: string): number {
+  doc.setFont(FONTE, 'normal');
   doc.setFontSize(14);
   doc.text('Escola Imaculada', 14, 16);
   doc.setFontSize(11);
@@ -50,6 +64,7 @@ function fimDaTabela(doc: jsPDF): number {
 /** Resumo final por aluno (presenças, faltas, faltas justificadas, avaliação). */
 export function baixarResumoPdf(resumo: RelatorioResumo): void {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  usarFonteUnicode(doc);
   const y = cabecalho(
     doc,
     `Resumo do ano — ${resumo.turmaNome}`,
@@ -67,8 +82,8 @@ export function baixarResumoPdf(resumo: RelatorioResumo): void {
       l.avaliacoes.map((a) => `(${a.referencia}) ${a.texto}`).join('\n\n') ||
         '—',
     ]),
-    styles: { fontSize: 8, cellPadding: 2, valign: 'top' },
-    headStyles: { fillColor: [21, 101, 192] },
+    styles: { font: FONTE, fontStyle: 'normal', fontSize: 8, cellPadding: 2, valign: 'top' },
+    headStyles: { font: FONTE, fontStyle: 'normal', fillColor: [21, 101, 192] },
     columnStyles: {
       0: { cellWidth: 38 },
       1: { cellWidth: 14, halign: 'center' },
@@ -87,6 +102,7 @@ export function baixarChamadaMensalPdf(
   turmaNome: string,
 ): void {
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+  usarFonteUnicode(doc);
   const y = cabecalho(
     doc,
     `Chamada — ${turmaNome}`,
@@ -101,8 +117,8 @@ export function baixarChamadaMensalPdf(
       ...dados.dias.map((d) => l.porDia[d] ?? '·'),
       String(l.totalFaltas),
     ]),
-    styles: { fontSize: 7, cellPadding: 1, halign: 'center' },
-    headStyles: { fillColor: [21, 101, 192] },
+    styles: { font: FONTE, fontStyle: 'normal', fontSize: 7, cellPadding: 1, halign: 'center' },
+    headStyles: { font: FONTE, fontStyle: 'normal', fillColor: [21, 101, 192] },
     columnStyles: { 0: { halign: 'left', cellWidth: 45 } },
   });
 
