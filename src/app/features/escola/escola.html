@@ -12,7 +12,7 @@
   <button mat-stroked-button (click)="carregar()">Tentar de novo</button>
 }
 
-@if (!carregando() && !erro()) {
+@if (carregou() && !erro()) {
   <form class="form" [formGroup]="form" (ngSubmit)="salvar()">
     <mat-form-field>
       <mat-label>Nome da escola</mat-label>

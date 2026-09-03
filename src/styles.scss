@@ -42,3 +42,72 @@ a {
 :root {
   --app-content-max: 1200px;
 }
+
+/* ---- Transição entre páginas ------------------------------------------
+   `withViewTransitions()` (router) tira um "snapshot" do conteúdo antigo e
+   do novo e cruza os dois. Damos um nome de transição só pro `.page` (a
+   área que troca) — a sidebar/topbar ficam de fora e não piscam.
+   O antigo some deslizando pra cima enquanto o novo entra deslizando de
+   baixo: os dois se sobrepõem, então a troca é fluida (sem "buraco"). */
+
+::view-transition-group(pagina) {
+  animation-duration: 260ms;
+}
+
+::view-transition-old(pagina) {
+  animation: 150ms cubic-bezier(0.4, 0, 1, 1) both ei-page-out;
+}
+
+::view-transition-new(pagina) {
+  animation: 260ms cubic-bezier(0.16, 1, 0.3, 1) both ei-page-in;
+}
+
+@keyframes ei-page-out {
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes ei-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+
+/* Sem view-transitions (Firefox antigo etc.): pelo menos um fade rápido. */
+@supports not (view-transition-name: none) {
+  @media (prefers-reduced-motion: no-preference) {
+    app-main-layout router-outlet + * {
+      display: block;
+      animation: ei-page-in 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+  }
+}
+
+/* Respeita "reduzir movimento" do sistema. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* ---- Entrada de itens de lista --------------------------------------
+   Classe aplicada por `animate.enter` quando linhas/cards entram no DOM
+   (ex: quando os dados chegam). Sobem com um leve fade, em cascata. */
+
+@media (prefers-reduced-motion: no-preference) {
+  .item-entra {
+    animation: ei-item-in 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+@keyframes ei-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}

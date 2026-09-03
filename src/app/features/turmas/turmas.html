@@ -26,19 +26,8 @@
   <button mat-stroked-button (click)="carregar()">Tentar de novo</button>
 }
 
-@if (!carregando() && !erro()) {
-  @if (turmas().length === 0) {
-    <div class="vazio">
-      <mat-icon>groups</mat-icon>
-      <p>
-        @if (podeGerenciar()) {
-          Nenhuma turma cadastrada ainda. Clique em "Nova turma".
-        } @else {
-          Você ainda não está vinculada a nenhuma turma.
-        }
-      </p>
-    </div>
-  } @else {
+@if (!erro()) {
+  @if (turmas().length > 0) {
     <table mat-table [dataSource]="turmas()" class="tabela">
       <ng-container matColumnDef="nome">
         <th mat-header-cell *matHeaderCellDef>Turma</th>
@@ -83,7 +72,23 @@
       </ng-container>
 
       <tr mat-header-row *matHeaderRowDef="colunas"></tr>
-      <tr mat-row *matRowDef="let row; columns: colunas"></tr>
+      <tr
+        mat-row
+        *matRowDef="let row; columns: colunas; let i = index"
+        animate.enter="item-entra"
+        [style.animation-delay.ms]="(i < 12 ? i : 12) * 25"
+      ></tr>
     </table>
+  } @else if (carregou()) {
+    <div class="vazio">
+      <mat-icon>groups</mat-icon>
+      <p>
+        @if (podeGerenciar()) {
+          Nenhuma turma cadastrada ainda. Clique em "Nova turma".
+        } @else {
+          Você ainda não está vinculada a nenhuma turma.
+        }
+      </p>
+    </div>
   }
 }

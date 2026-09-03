@@ -21,6 +21,7 @@ import {
   StatusDia,
 } from '../../../core/models/chamada.model';
 import { toISODate } from '../../../core/date/iso-date';
+import { iniciarCarregamento } from '../../../core/util/carregamento';
 
 @Component({
   selector: 'app-chamada-dia',
@@ -80,7 +81,7 @@ export class ChamadaDia {
   carregar(): void {
     if (!this.turmaId) return;
     const iso = toISODate(this.data);
-    this.carregando.set(true);
+    const fim = iniciarCarregamento(this.carregando);
 
     forkJoin({
       alunos: this.alunosService.listar({
@@ -96,10 +97,10 @@ export class ChamadaDia {
         const m: Record<string, StatusDia> = {};
         for (const a of alunos) m[a.id] = prev.get(a.id) ?? 'C';
         this.marcacoes = m;
-        this.carregando.set(false);
+        fim();
       },
       error: () => {
-        this.carregando.set(false);
+        fim();
         this.snack.open('Não foi possível carregar a chamada.', undefined, {
           duration: 3000,
         });

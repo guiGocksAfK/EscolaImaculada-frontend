@@ -24,13 +24,8 @@
   <p class="erro">{{ erro() }}</p>
 }
 
-@if (!carregando() && !erro()) {
-  @if (registros().length === 0) {
-    <div class="vazio">
-      <mat-icon>event_busy</mat-icon>
-      <p>Nenhuma justificativa registrada.</p>
-    </div>
-  } @else {
+@if (!erro()) {
+  @if (registros().length > 0) {
     <table mat-table [dataSource]="registros()" class="tabela">
       <ng-container matColumnDef="data">
         <th mat-header-cell *matHeaderCellDef>Data</th>
@@ -60,7 +55,17 @@
       </ng-container>
 
       <tr mat-header-row *matHeaderRowDef="colunas"></tr>
-      <tr mat-row *matRowDef="let row; columns: colunas"></tr>
+      <tr
+        mat-row
+        *matRowDef="let row; columns: colunas; let i = index"
+        animate.enter="item-entra"
+        [style.animation-delay.ms]="(i < 12 ? i : 12) * 25"
+      ></tr>
     </table>
+  } @else if (carregou()) {
+    <div class="vazio">
+      <mat-icon>event_busy</mat-icon>
+      <p>Nenhuma justificativa registrada.</p>
+    </div>
   }
 }

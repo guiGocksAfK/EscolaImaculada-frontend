@@ -6,6 +6,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 import { TurmasService } from '../../../core/services/turmas.service';
 import { ChamadaService } from '../../../core/services/chamada.service';
+import { iniciarCarregamento } from '../../../core/util/carregamento';
 import { Turma } from '../../../core/models/turma.model';
 import { ChamadaMensal as ChamadaMensalModel } from '../../../core/models/chamada.model';
 
@@ -60,14 +61,14 @@ export class ChamadaMensal {
 
   carregar(): void {
     if (!this.turmaId) return;
-    this.carregando.set(true);
+    const fim = iniciarCarregamento(this.carregando);
     this.dados.set(null);
     this.chamadaService.getMes(this.turmaId, this.ano, this.mes).subscribe({
       next: (d) => {
         this.dados.set(d);
-        this.carregando.set(false);
+        fim();
       },
-      error: () => this.carregando.set(false),
+      error: () => fim(),
     });
   }
 

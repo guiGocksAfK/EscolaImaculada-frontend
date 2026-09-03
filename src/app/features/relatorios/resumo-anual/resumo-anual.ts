@@ -13,6 +13,7 @@ import { RelatoriosService } from '../../../core/services/relatorios.service';
 import { Turma } from '../../../core/models/turma.model';
 import { RelatorioResumo, ResumoAluno } from '../../../core/models/relatorio.model';
 import { baixarResumoPdf } from '../../../core/pdf/relatorio-pdf';
+import { iniciarCarregamento } from '../../../core/util/carregamento';
 
 @Component({
   selector: 'app-resumo-anual',
@@ -55,14 +56,14 @@ export class ResumoAnual {
 
   carregar(): void {
     if (!this.turmaId) return;
-    this.carregando.set(true);
+    const fim = iniciarCarregamento(this.carregando);
     this.resumo.set(null);
     this.service.resumoPorAluno(this.turmaId, this.ano).subscribe({
       next: (r) => {
         this.resumo.set(r);
-        this.carregando.set(false);
+        fim();
       },
-      error: () => this.carregando.set(false),
+      error: () => fim(),
     });
   }
 

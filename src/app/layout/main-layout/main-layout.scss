@@ -88,4 +88,6 @@ nav {
   padding: 1.5rem;
   max-width: var(--app-content-max);
   width: 100%;
+  /* área que anima na troca de rota (ver styles.scss) */
+  view-transition-name: pagina;
 }
