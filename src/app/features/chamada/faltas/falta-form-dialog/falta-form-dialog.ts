@@ -14,9 +14,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatButtonModule } from '@angular/material/button';
+import { forkJoin } from 'rxjs';
 
 import { TurmasService } from '../../../../core/services/turmas.service';
 import { AlunosService } from '../../../../core/services/alunos.service';
+import { ChamadaService } from '../../../../core/services/chamada.service';
 import { Turma } from '../../../../core/models/turma.model';
 import { Aluno } from '../../../../core/models/aluno.model';
 import {
@@ -50,11 +52,13 @@ export class FaltaFormDialog implements OnInit {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly turmasService = inject(TurmasService);
   private readonly alunosService = inject(AlunosService);
+  private readonly chamadaService = inject(ChamadaService);
   private readonly ref = inject(MatDialogRef<FaltaFormDialog, FaltaFormResult>);
   private readonly data = inject<FaltaFormData>(MAT_DIALOG_DATA);
 
   readonly turmas = signal<Turma[]>([]);
   readonly alunos = signal<Aluno[]>([]);
+  readonly carregandoAlunos = signal(false);
   readonly edicao = !!this.data.falta;
 
   readonly form = this.fb.group({
@@ -96,12 +100,49 @@ export class FaltaFormDialog implements OnInit {
       if (id) this.carregarAlunos(id);
       else this.alunos.set([]);
     });
+
+    this.form.controls.data.valueChanges.subscribe(() => {
+      const turmaId = this.form.value.turmaId;
+      if (turmaId) {
+        this.form.patchValue({ alunoId: '' });
+        this.carregarAlunos(turmaId);
+      }
+    });
   }
 
   private carregarAlunos(turmaId: string): void {
-    this.alunosService
-      .listar({ turmaId })
-      .subscribe((l) => this.alunos.set(l));
+    const dataVal = this.form.controls.data.value;
+    if (!dataVal) {
+      this.alunosService
+        .listar({ turmaId })
+        .subscribe((l) => this.alunos.set(l));
+      return;
+    }
+
+    const iso = toISODate(dataVal);
+    const fim = () => this.carregandoAlunos.set(false);
+    this.carregandoAlunos.set(true);
+    forkJoin({
+      alunos: this.alunosService.listar({ turmaId }),
+      dia: this.chamadaService.getDia(turmaId, iso),
+    }).subscribe({
+      next: ({ alunos, dia }) => {
+        const comFalta = new Set(
+          dia.registros
+            .filter((r) => r.status === 'F')
+            .map((r) => r.alunoId),
+        );
+        const alunoAtualId = this.data.falta?.alunoId;
+        this.alunos.set(
+          alunos.filter((a) => comFalta.has(a.id) || a.id === alunoAtualId),
+        );
+        fim();
+      },
+      error: () => {
+        this.alunos.set([]);
+        fim();
+      },
+    });
   }
 
   salvar(): void {
