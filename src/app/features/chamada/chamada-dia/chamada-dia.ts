@@ -16,7 +16,6 @@ import { ChamadaService } from '../../../core/services/chamada.service';
 import { Turma } from '../../../core/models/turma.model';
 import { Aluno } from '../../../core/models/aluno.model';
 import {
-  STATUS_DIA,
   STATUS_DIA_LABEL,
   StatusDia,
 } from '../../../core/models/chamada.model';
@@ -48,7 +47,7 @@ export class ChamadaDia {
   private readonly chamadaService = inject(ChamadaService);
   private readonly snack = inject(MatSnackBar);
 
-  readonly statusOpcoes = STATUS_DIA;
+  readonly statusOpcoes: StatusDia[] = ['C', 'F'];
   readonly statusLabel = STATUS_DIA_LABEL;
 
   readonly turmas = signal<Turma[]>([]);
@@ -63,14 +62,13 @@ export class ChamadaDia {
   /** alunoId -> status do dia */
   marcacoes: Record<string, StatusDia> = {};
 
-  readonly resumo = signal({ C: 0, F: 0, D: 0 });
+  readonly resumo = signal({ C: 0, F: 0 });
 
   private atualizarResumo(): void {
     const vals = Object.values(this.marcacoes);
     this.resumo.set({
       C: vals.filter((v) => v === 'C').length,
       F: vals.filter((v) => v === 'F').length,
-      D: vals.filter((v) => v === 'D').length,
     });
   }
 
@@ -122,13 +120,6 @@ export class ChamadaDia {
         });
       },
     });
-  }
-
-  marcarTodos(status: StatusDia): void {
-    const m: Record<string, StatusDia> = {};
-    for (const a of this.alunos()) m[a.id] = status;
-    this.marcacoes = m;
-    this.atualizarResumo();
   }
 
   salvar(): void {

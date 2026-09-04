@@ -37,13 +37,6 @@
       }
       <span>Presentes: <strong>{{ resumo().C }}</strong></span>
       <span>Faltas: <strong>{{ resumo().F }}</strong></span>
-      @if (resumo().D) {
-        <span>Desistentes: <strong>{{ resumo().D }}</strong></span>
-      }
-    </div>
-    <div class="atalhos">
-      <button mat-button (click)="marcarTodos('C')">Todos presentes</button>
-      <button mat-button (click)="marcarTodos('F')">Todos falta</button>
     </div>
   </div>
 
@@ -60,7 +53,14 @@
           hideSingleSelectionIndicator
         >
           @for (s of statusOpcoes; track s) {
-            <mat-button-toggle [value]="s">{{ s }}</mat-button-toggle>
+            <mat-button-toggle
+              [value]="s"
+              [class.tg-c]="s === 'C'"
+              [class.tg-f]="s === 'F'"
+              [class.tg-selecionado]="marcacoes[a.id] === s"
+            >
+              {{ s }}
+            </mat-button-toggle>
           }
         </mat-button-toggle-group>
       </li>
@@ -78,5 +78,5 @@
     </button>
   </div>
 
-  <p class="legenda">C = compareceu · F = falta · D = desistente</p>
+  <p class="legenda">C = compareceu · F = falta</p>
 }
