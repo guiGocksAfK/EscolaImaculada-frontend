@@ -6,16 +6,6 @@
   </button>
 </header>
 
-<mat-form-field class="filtro">
-  <mat-label>Turma</mat-label>
-  <mat-select [(ngModel)]="filtroTurma" (ngModelChange)="carregar()">
-    <mat-option value="">Todas</mat-option>
-    @for (t of turmas(); track t.id) {
-      <mat-option [value]="t.id">{{ t.nome }}</mat-option>
-    }
-  </mat-select>
-</mat-form-field>
-
 @if (carregando()) {
   <mat-progress-bar mode="indeterminate" />
 }

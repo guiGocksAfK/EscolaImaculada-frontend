@@ -1,24 +1,15 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, input, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
-import { TurmasService } from '../../../core/services/turmas.service';
 import { FaltasJustificadasService } from '../../../core/services/faltas-justificadas.service';
 import { iniciarCarregamento } from '../../../core/util/carregamento';
-import {
-  lerPreferencia,
-  salvarPreferencia,
-} from '../../../core/util/preferencias';
-import { Turma } from '../../../core/models/turma.model';
 import { FaltaJustificada } from '../../../core/models/falta-justificada.model';
 import {
   ConfirmDialog,
@@ -34,12 +25,9 @@ import {
   selector: 'app-faltas',
   imports: [
     DatePipe,
-    FormsModule,
     MatTableModule,
     MatButtonModule,
     MatIconModule,
-    MatFormFieldModule,
-    MatSelectModule,
     MatProgressBarModule,
     MatTooltipModule,
   ],
@@ -47,47 +35,42 @@ import {
   styleUrl: './faltas.scss',
 })
 export class Faltas {
-  private readonly turmasService = inject(TurmasService);
   private readonly service = inject(FaltasJustificadasService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
 
   readonly colunas = ['data', 'aluno', 'motivo', 'acoes'];
-  readonly turmas = signal<Turma[]>([]);
   readonly registros = signal<FaltaJustificada[]>([]);
   readonly carregando = signal(false);
   readonly carregou = signal(false);
   readonly erro = signal<string | null>(null);
 
-  filtroTurma = lerPreferencia<string>('faltas.filtroTurma') ?? '';
+  readonly turmaId = input<string>('');
 
   constructor() {
-    this.turmasService.listar().subscribe((l) => {
-      this.turmas.set(l);
-      if (this.filtroTurma && !l.some((t) => t.id === this.filtroTurma)) {
-        this.filtroTurma = '';
-        this.carregar();
-      }
+    effect(() => {
+      this.turmaId();
+      this.carregar();
     });
-    this.carregar();
   }
 
   carregar(): void {
     this.erro.set(null);
-    salvarPreferencia('faltas.filtroTurma', this.filtroTurma);
     const fim = iniciarCarregamento(this.carregando);
-    this.service.listar({ turmaId: this.filtroTurma || undefined }).subscribe({
-      next: (l) => {
-        this.registros.set(l);
-        this.carregou.set(true);
-        fim();
-      },
-      error: () => {
-        this.erro.set('Não foi possível carregar as justificativas.');
-        this.carregou.set(true);
-        fim();
-      },
-    });
+    this.service
+      .listar({ turmaId: this.turmaId() || undefined })
+      .subscribe({
+        next: (l) => {
+          this.registros.set(l);
+          this.carregou.set(true);
+          fim();
+        },
+        error: () => {
+          this.erro.set('Não foi possível carregar as justificativas.');
+          this.carregou.set(true);
+          fim();
+        },
+      });
   }
 
   nova(): void {
@@ -126,7 +109,10 @@ export class Faltas {
   }
 
   private abrirForm(falta?: FaltaJustificada): void {
-    const data: FaltaFormData = { falta, turmaIdInicial: this.filtroTurma };
+    const data: FaltaFormData = {
+      falta,
+      turmaIdInicial: this.turmaId() || undefined,
+    };
     this.dialog
       .open(FaltaFormDialog, { data })
       .afterClosed()

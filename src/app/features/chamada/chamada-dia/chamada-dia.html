@@ -1,14 +1,5 @@
 <div class="filtros">
   <mat-form-field>
-    <mat-label>Turma</mat-label>
-    <mat-select [(ngModel)]="turmaId" (ngModelChange)="carregar()">
-      @for (t of turmas(); track t.id) {
-        <mat-option [value]="t.id">{{ t.nome }}</mat-option>
-      }
-    </mat-select>
-  </mat-form-field>
-
-  <mat-form-field>
     <mat-label>Data</mat-label>
     <input
       matInput
@@ -25,8 +16,8 @@
   <mat-progress-bar mode="indeterminate" />
 }
 
-@if (!turmaId) {
-  <p class="dica">Escolha a turma e a data para lançar a chamada.</p>
+@if (!turmaId()) {
+  <p class="dica">Escolha a turma no topo da página para lançar a chamada.</p>
 } @else if (!carregando() && alunos().length === 0) {
   <p class="dica">Nenhum aluno ativo nesta turma.</p>
 } @else if (!carregando()) {

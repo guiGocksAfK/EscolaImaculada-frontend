@@ -1,14 +1,5 @@
 <div class="filtros">
   <mat-form-field>
-    <mat-label>Turma</mat-label>
-    <mat-select [(ngModel)]="turmaId" (ngModelChange)="carregar()">
-      @for (t of turmas(); track t.id) {
-        <mat-option [value]="t.id">{{ t.nome }}</mat-option>
-      }
-    </mat-select>
-  </mat-form-field>
-
-  <mat-form-field>
     <mat-label>Mês</mat-label>
     <mat-select [(ngModel)]="mes" (ngModelChange)="carregar()">
       @for (m of meses; track $index) {
@@ -31,8 +22,8 @@
   <mat-progress-bar mode="indeterminate" />
 }
 
-@if (!turmaId) {
-  <p class="dica">Escolha a turma e o mês.</p>
+@if (!turmaId()) {
+  <p class="dica">Escolha a turma no topo da página e o mês.</p>
 } @else if (dados(); as d) {
   @if (d.dias.length === 0) {
     <p class="dica">Nenhuma chamada lançada neste mês.</p>

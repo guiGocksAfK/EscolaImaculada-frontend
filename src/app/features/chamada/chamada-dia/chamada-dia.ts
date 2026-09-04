@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -10,10 +10,8 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
-import { TurmasService } from '../../../core/services/turmas.service';
 import { AlunosService } from '../../../core/services/alunos.service';
 import { ChamadaService } from '../../../core/services/chamada.service';
-import { Turma } from '../../../core/models/turma.model';
 import { Aluno } from '../../../core/models/aluno.model';
 import {
   STATUS_DIA_LABEL,
@@ -21,10 +19,6 @@ import {
 } from '../../../core/models/chamada.model';
 import { toISODate } from '../../../core/date/iso-date';
 import { iniciarCarregamento } from '../../../core/util/carregamento';
-import {
-  lerPreferencia,
-  salvarPreferencia,
-} from '../../../core/util/preferencias';
 
 @Component({
   selector: 'app-chamada-dia',
@@ -42,7 +36,6 @@ import {
   styleUrl: './chamada-dia.scss',
 })
 export class ChamadaDia {
-  private readonly turmasService = inject(TurmasService);
   private readonly alunosService = inject(AlunosService);
   private readonly chamadaService = inject(ChamadaService);
   private readonly snack = inject(MatSnackBar);
@@ -50,13 +43,13 @@ export class ChamadaDia {
   readonly statusOpcoes: StatusDia[] = ['C', 'F'];
   readonly statusLabel = STATUS_DIA_LABEL;
 
-  readonly turmas = signal<Turma[]>([]);
+  readonly turmaId = input<string>('');
+
   readonly alunos = signal<Aluno[]>([]);
   readonly carregando = signal(false);
   readonly salvando = signal(false);
   readonly jaLancada = signal(false);
 
-  turmaId = '';
   data: Date = new Date();
 
   /** alunoId -> status do dia */
@@ -78,30 +71,27 @@ export class ChamadaDia {
   }
 
   constructor() {
-    this.turmasService.listar().subscribe((l) => {
-      this.turmas.set(l);
-      const ultima = lerPreferencia<string>('chamada-dia.turmaId');
-      if (l.length === 1) {
-        this.turmaId = l[0].id;
-      } else if (ultima && l.some((t) => t.id === ultima)) {
-        this.turmaId = ultima;
+    effect(() => {
+      if (this.turmaId()) {
+        this.carregar();
+      } else {
+        this.alunos.set([]);
+        this.marcacoes = {};
+        this.jaLancada.set(false);
+        this.resumo.set({ C: 0, F: 0 });
       }
-      if (this.turmaId) this.carregar();
     });
   }
 
   carregar(): void {
-    if (!this.turmaId) return;
-    salvarPreferencia('chamada-dia.turmaId', this.turmaId);
+    const turmaId = this.turmaId();
+    if (!turmaId) return;
     const iso = toISODate(this.data);
     const fim = iniciarCarregamento(this.carregando);
 
     forkJoin({
-      alunos: this.alunosService.listar({
-        turmaId: this.turmaId,
-        status: 'ATIVO',
-      }),
-      dia: this.chamadaService.getDia(this.turmaId, iso),
+      alunos: this.alunosService.listar({ turmaId, status: 'ATIVO' }),
+      dia: this.chamadaService.getDia(turmaId, iso),
     }).subscribe({
       next: ({ alunos, dia }) => {
         this.alunos.set(alunos);
@@ -123,11 +113,12 @@ export class ChamadaDia {
   }
 
   salvar(): void {
-    if (!this.turmaId || this.alunos().length === 0) return;
+    const turmaId = this.turmaId();
+    if (!turmaId || this.alunos().length === 0) return;
     this.salvando.set(true);
     this.chamadaService
       .salvarDia({
-        turmaId: this.turmaId,
+        turmaId,
         data: toISODate(this.data),
         registros: this.alunos().map((a) => ({
           alunoId: a.id,
