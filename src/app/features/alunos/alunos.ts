@@ -63,7 +63,7 @@ export class Alunos {
 
   readonly statusOpcoes = STATUS_ALUNO;
   readonly statusLabel = STATUS_ALUNO_LABEL;
-  readonly colunas = ['nome', 'turma', 'nascimento', 'status', 'acoes'];
+  private readonly colunasBase = ['nome', 'turma', 'nascimento', 'status'];
 
   readonly turmas = signal<Turma[]>([]);
   readonly alunos = signal<Aluno[]>([]);
@@ -75,7 +75,10 @@ export class Alunos {
   filtroStatus: StatusAluno | '' =
     lerPreferencia<StatusAluno | ''>('alunos.filtroStatus') ?? 'ATIVO';
 
-  readonly podeExcluir = computed(() => this.auth.hasPapel('DIRETORA'));
+  readonly podeGerenciar = computed(() => this.auth.hasPapel('DIRETORA'));
+  readonly colunas = computed(() =>
+    this.podeGerenciar() ? [...this.colunasBase, 'acoes'] : this.colunasBase,
+  );
 
   constructor() {
     this.turmasService.listar().subscribe((l) => {
@@ -131,14 +134,17 @@ export class Alunos {
   }
 
   novo(): void {
+    if (!this.podeGerenciar()) return;
     this.abrirForm();
   }
 
   editar(aluno: Aluno): void {
+    if (!this.podeGerenciar()) return;
     this.abrirForm(aluno);
   }
 
   mudarStatus(aluno: Aluno, status: StatusAluno): void {
+    if (!this.podeGerenciar()) return;
     if (status === aluno.status) return;
 
     const sair = status !== 'ATIVO';
@@ -175,6 +181,7 @@ export class Alunos {
   }
 
   excluir(aluno: Aluno): void {
+    if (!this.podeGerenciar()) return;
     const dados: ConfirmDialogData = {
       titulo: 'Excluir aluno',
       mensagem: `Excluir "${aluno.nome}" apaga o cadastro e o histórico. Para tirar da chamada sem perder o histórico, use "Transferido". Excluir mesmo assim?`,
