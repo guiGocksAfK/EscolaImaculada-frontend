@@ -10,6 +10,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { AlunosService } from '../../../core/services/alunos.service';
@@ -21,6 +22,10 @@ import {
 } from '../../../core/models/chamada.model';
 import { toISODate } from '../../../core/date/iso-date';
 import { iniciarCarregamento } from '../../../core/util/carregamento';
+import {
+  ConfirmDialog,
+  ConfirmDialogData,
+} from '../../../shared/confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'app-chamada-dia',
@@ -42,6 +47,7 @@ import { iniciarCarregamento } from '../../../core/util/carregamento';
 export class ChamadaDia {
   private readonly alunosService = inject(AlunosService);
   private readonly chamadaService = inject(ChamadaService);
+  private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
 
   readonly statusOpcoes: StatusDia[] = ['C', 'F'];
@@ -75,9 +81,18 @@ export class ChamadaDia {
     this.atualizarResumo();
   }
 
-  /** Só o dia de hoje pode ser lançado/editado — dias passados ou futuros são consulta. */
+  ehHoje(): boolean {
+    return toISODate(this.data) === toISODate(new Date());
+  }
+
+  /** Chamada só é editável hoje e enquanto não tiver sido lançada; depois disso é só consulta. */
   somenteLeitura(): boolean {
-    return toISODate(this.data) !== toISODate(new Date());
+    return this.jaLancada() || !this.ehHoje();
+  }
+
+  /** Só mostra a lista quando há o que consultar: chamada já lançada, ou hoje (pra poder lançar). */
+  mostrarRoster(): boolean {
+    return this.jaLancada() || this.ehHoje();
   }
 
   diaAnterior(): void {
@@ -139,6 +154,22 @@ export class ChamadaDia {
   salvar(): void {
     const turmaId = this.turmaId();
     if (!turmaId || this.alunos().length === 0 || this.somenteLeitura()) return;
+
+    const dados: ConfirmDialogData = {
+      titulo: 'Lançar chamada',
+      mensagem:
+        'Depois de lançada, a chamada deste dia não poderá mais ser editada. Confirmar o lançamento?',
+      confirmar: 'Lançar chamada',
+    };
+    this.dialog
+      .open(ConfirmDialog, { data: dados })
+      .afterClosed()
+      .subscribe((ok) => {
+        if (ok) this.confirmarSalvar(turmaId);
+      });
+  }
+
+  private confirmarSalvar(turmaId: string): void {
     this.salvando.set(true);
     this.chamadaService
       .salvarDia({

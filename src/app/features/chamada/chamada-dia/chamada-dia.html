@@ -28,13 +28,13 @@
   <p class="dica">Escolha a turma no topo da página para lançar a chamada.</p>
 } @else if (!carregando() && alunos().length === 0) {
   <p class="dica">Nenhum aluno ativo nesta turma.</p>
+} @else if (!carregando() && !mostrarRoster()) {
+  <p class="dica">Não foi realizada nenhuma chamada nesse dia.</p>
 } @else if (!carregando()) {
   <div class="barra">
     <div class="resumo">
-      @if (somenteLeitura()) {
-        <span class="tag tag--leitura">Somente visualização</span>
-      } @else if (jaLancada()) {
-        <span class="tag tag--ok">Chamada já lançada — editando</span>
+      @if (jaLancada()) {
+        <span class="tag tag--leitura">Chamada lançada, não pode mais ser editada</span>
       }
       <span>Presentes: <strong>{{ resumo().C }}</strong></span>
       <span>Faltas: <strong>{{ resumo().F }}</strong></span>
