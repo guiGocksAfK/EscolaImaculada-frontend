@@ -1,0 +1,47 @@
+<section class="hero">
+  <div class="hero-logo">
+    @if (logoOk()) {
+      <img
+        src="logo-escola.jpeg"
+        alt="Brasão da Escola Imaculada"
+        (error)="logoOk.set(false)"
+      />
+    } @else {
+      <mat-icon>school</mat-icon>
+    }
+  </div>
+
+  <div class="hero-texto">
+    <p class="escola">Centro de Educação Infantil Maria Imaculada Conceição</p>
+    <h1>{{ saudacao }}, {{ primeiroNome() }}</h1>
+    <p class="data">{{ dataHoje }}</p>
+  </div>
+</section>
+
+<h2 class="secao">O que você quer fazer?</h2>
+
+<a [routerLink]="principal.path" class="atalho atalho--destaque">
+  <span class="ic">
+    <mat-icon>{{ principal.icon }}</mat-icon>
+  </span>
+  <span class="txt">
+    <strong>{{ principal.label }}</strong>
+    <small>{{ principal.descricao }}</small>
+  </span>
+  <mat-icon class="chevron">chevron_right</mat-icon>
+</a>
+
+<div class="grid">
+  @for (a of atalhos; track a.path + a.label) {
+    <a [routerLink]="a.path" class="atalho">
+      <span class="ic">
+        <mat-icon>{{ a.icon }}</mat-icon>
+      </span>
+      <span class="txt">
+        <strong>{{ a.label }}</strong>
+        <small>{{ a.descricao }}</small>
+      </span>
+      <mat-icon class="chevron">chevron_right</mat-icon>
+    </a>
+  }
+</div>

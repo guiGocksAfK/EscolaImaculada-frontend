@@ -12,6 +12,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { EscolaService } from '../../core/services/escola.service';
+import { iniciarCarregamento } from '../../core/util/carregamento';
 
 @Component({
   selector: 'app-escola',
@@ -31,7 +32,8 @@ export class Escola {
   private readonly service = inject(EscolaService);
   private readonly snack = inject(MatSnackBar);
 
-  readonly carregando = signal(true);
+  readonly carregando = signal(false);
+  readonly carregou = signal(false);
   readonly salvando = signal(false);
   readonly erro = signal<string | null>(null);
 
@@ -45,16 +47,18 @@ export class Escola {
   }
 
   carregar(): void {
-    this.carregando.set(true);
     this.erro.set(null);
+    const fim = iniciarCarregamento(this.carregando);
     this.service.obter().subscribe({
       next: (e) => {
         this.form.reset({ nome: e.nome, endereco: e.endereco });
-        this.carregando.set(false);
+        this.carregou.set(true);
+        fim();
       },
       error: () => {
         this.erro.set('Não foi possível carregar os dados da escola.');
-        this.carregando.set(false);
+        this.carregou.set(true);
+        fim();
       },
     });
   }

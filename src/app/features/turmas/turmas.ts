@@ -14,6 +14,7 @@ import {
   ConfirmDialog,
   ConfirmDialogData,
 } from '../../shared/confirm-dialog/confirm-dialog';
+import { iniciarCarregamento } from '../../core/util/carregamento';
 import {
   TurmaFormData,
   TurmaFormDialog,
@@ -44,7 +45,8 @@ export class Turmas {
   }
 
   readonly turmas = signal<Turma[]>([]);
-  readonly carregando = signal(true);
+  readonly carregando = signal(false);
+  readonly carregou = signal(false);
   readonly erro = signal<string | null>(null);
 
   readonly podeGerenciar = computed(() => this.auth.hasPapel('DIRETORA'));
@@ -54,16 +56,18 @@ export class Turmas {
   }
 
   carregar(): void {
-    this.carregando.set(true);
     this.erro.set(null);
+    const fim = iniciarCarregamento(this.carregando);
     this.turmasService.listar().subscribe({
       next: (lista) => {
         this.turmas.set(lista);
-        this.carregando.set(false);
+        this.carregou.set(true);
+        fim();
       },
       error: () => {
         this.erro.set('Não foi possível carregar as turmas.');
-        this.carregando.set(false);
+        this.carregou.set(true);
+        fim();
       },
     });
   }

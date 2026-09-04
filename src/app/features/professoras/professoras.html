@@ -18,13 +18,8 @@
   <button mat-stroked-button (click)="carregar()">Tentar de novo</button>
 }
 
-@if (!carregando() && !erro()) {
-  @if (professoras().length === 0) {
-    <div class="vazio">
-      <mat-icon>person_add</mat-icon>
-      <p>Nenhuma professora cadastrada. Clique em "Nova professora".</p>
-    </div>
-  } @else {
+@if (!erro()) {
+  @if (professoras().length > 0) {
     <table mat-table [dataSource]="professoras()" class="tabela">
       <ng-container matColumnDef="nome">
         <th mat-header-cell *matHeaderCellDef>Nome</th>
@@ -61,7 +56,17 @@
       </ng-container>
 
       <tr mat-header-row *matHeaderRowDef="colunas"></tr>
-      <tr mat-row *matRowDef="let row; columns: colunas"></tr>
+      <tr
+        mat-row
+        *matRowDef="let row; columns: colunas; let i = index"
+        animate.enter="item-entra"
+        [style.animation-delay.ms]="(i < 12 ? i : 12) * 25"
+      ></tr>
     </table>
+  } @else if (carregou()) {
+    <div class="vazio">
+      <mat-icon>person_add</mat-icon>
+      <p>Nenhuma professora cadastrada. Clique em "Nova professora".</p>
+    </div>
   }
 }

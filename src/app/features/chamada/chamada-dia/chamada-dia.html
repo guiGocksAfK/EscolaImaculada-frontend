@@ -47,9 +47,12 @@
     </div>
   </div>
 
-  <ul class="lista">
-    @for (a of alunos(); track a.id) {
-      <li>
+  <ul class="roster">
+    @for (a of alunos(); track a.id; let i = $index) {
+      <li
+        animate.enter="item-entra"
+        [style.animation-delay.ms]="(i < 12 ? i : 12) * 20"
+      >
         <span class="nome">{{ a.nome }}</span>
         <mat-button-toggle-group [(ngModel)]="marcacoes[a.id]" hideSingleSelectionIndicator>
           @for (s of statusOpcoes; track s) {

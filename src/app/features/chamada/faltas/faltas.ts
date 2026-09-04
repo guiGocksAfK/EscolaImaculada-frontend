@@ -13,6 +13,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { TurmasService } from '../../../core/services/turmas.service';
 import { FaltasJustificadasService } from '../../../core/services/faltas-justificadas.service';
+import { iniciarCarregamento } from '../../../core/util/carregamento';
 import { Turma } from '../../../core/models/turma.model';
 import { FaltaJustificada } from '../../../core/models/falta-justificada.model';
 import {
@@ -50,7 +51,8 @@ export class Faltas {
   readonly colunas = ['data', 'aluno', 'motivo', 'acoes'];
   readonly turmas = signal<Turma[]>([]);
   readonly registros = signal<FaltaJustificada[]>([]);
-  readonly carregando = signal(true);
+  readonly carregando = signal(false);
+  readonly carregou = signal(false);
   readonly erro = signal<string | null>(null);
 
   filtroTurma = '';
@@ -61,16 +63,18 @@ export class Faltas {
   }
 
   carregar(): void {
-    this.carregando.set(true);
     this.erro.set(null);
+    const fim = iniciarCarregamento(this.carregando);
     this.service.listar({ turmaId: this.filtroTurma || undefined }).subscribe({
       next: (l) => {
         this.registros.set(l);
-        this.carregando.set(false);
+        this.carregou.set(true);
+        fim();
       },
       error: () => {
         this.erro.set('Não foi possível carregar as justificativas.');
-        this.carregando.set(false);
+        this.carregou.set(true);
+        fim();
       },
     });
   }

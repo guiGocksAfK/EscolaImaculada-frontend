@@ -9,6 +9,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { ProfessorasService } from '../../core/services/professoras.service';
+import { iniciarCarregamento } from '../../core/util/carregamento';
 import { ProfessoraDetalhe } from '../../core/models/usuario.model';
 import {
   ConfirmDialog,
@@ -40,7 +41,8 @@ export class Professoras {
 
   readonly colunas = ['nome', 'cpf', 'nascimento', 'turmas', 'acoes'];
   readonly professoras = signal<ProfessoraDetalhe[]>([]);
-  readonly carregando = signal(true);
+  readonly carregando = signal(false);
+  readonly carregou = signal(false);
   readonly erro = signal<string | null>(null);
 
   constructor() {
@@ -48,16 +50,18 @@ export class Professoras {
   }
 
   carregar(): void {
-    this.carregando.set(true);
     this.erro.set(null);
+    const fim = iniciarCarregamento(this.carregando);
     this.service.listarDetalhado().subscribe({
       next: (l) => {
         this.professoras.set(l);
-        this.carregando.set(false);
+        this.carregou.set(true);
+        fim();
       },
       error: () => {
         this.erro.set('Não foi possível carregar as professoras.');
-        this.carregando.set(false);
+        this.carregou.set(true);
+        fim();
       },
     });
   }

@@ -15,6 +15,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { AuthService } from '../../core/auth/auth.service';
 import { AlunosService } from '../../core/services/alunos.service';
 import { TurmasService } from '../../core/services/turmas.service';
+import { iniciarCarregamento } from '../../core/util/carregamento';
 import { Turma } from '../../core/models/turma.model';
 import {
   Aluno,
@@ -62,7 +63,8 @@ export class Alunos {
 
   readonly turmas = signal<Turma[]>([]);
   readonly alunos = signal<Aluno[]>([]);
-  readonly carregando = signal(true);
+  readonly carregando = signal(false);
+  readonly carregou = signal(false);
   readonly erro = signal<string | null>(null);
 
   filtroTurma = '';
@@ -76,8 +78,8 @@ export class Alunos {
   }
 
   carregar(): void {
-    this.carregando.set(true);
     this.erro.set(null);
+    const fim = iniciarCarregamento(this.carregando);
     this.alunosService
       .listar({
         turmaId: this.filtroTurma || undefined,
@@ -86,11 +88,13 @@ export class Alunos {
       .subscribe({
         next: (lista) => {
           this.alunos.set(lista);
-          this.carregando.set(false);
+          this.carregou.set(true);
+          fim();
         },
         error: () => {
           this.erro.set('Não foi possível carregar os alunos.');
-          this.carregando.set(false);
+          this.carregou.set(true);
+          fim();
         },
       });
   }

@@ -27,6 +27,8 @@ nav {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
+  /* alinha o primeiro item do menu com o topo do conteúdo da página */
+  margin-top: 9px;
 }
 
 .nav-link {
@@ -86,4 +88,6 @@ nav {
   padding: 1.5rem;
   max-width: var(--app-content-max);
   width: 100%;
+  /* área que anima na troca de rota (ver styles.scss) */
+  view-transition-name: pagina;
 }

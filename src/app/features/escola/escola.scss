@@ -1,22 +1,15 @@
-h1 {
-  margin: 0 0 0.15rem;
-}
-
-.sub {
-  margin: 0 0 1.25rem;
-  color: var(--mat-sys-on-surface-variant, #6b7280);
-  font-size: 0.9rem;
-}
-
-.erro {
-  color: var(--mat-sys-error, #b3261e);
-}
-
 .form {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  max-width: 520px;
+  max-width: 560px;
+}
+
+.form.card {
+  background: var(--mat-sys-surface, #fff);
+  border: 1px solid var(--mat-sys-outline-variant, #e5e7eb);
+  border-radius: 14px;
+  padding: 1.5rem;
 }
 
 mat-form-field {

@@ -40,13 +40,8 @@
   <button mat-stroked-button (click)="carregar()">Tentar de novo</button>
 }
 
-@if (!carregando() && !erro()) {
-  @if (alunos().length === 0) {
-    <div class="vazio">
-      <mat-icon>badge</mat-icon>
-      <p>Nenhum aluno com esses filtros.</p>
-    </div>
-  } @else {
+@if (!erro()) {
+  @if (alunos().length > 0) {
     <table mat-table [dataSource]="alunos()" class="tabela">
       <ng-container matColumnDef="nome">
         <th mat-header-cell *matHeaderCellDef>Aluno</th>
@@ -105,7 +100,17 @@
       </ng-container>
 
       <tr mat-header-row *matHeaderRowDef="colunas"></tr>
-      <tr mat-row *matRowDef="let row; columns: colunas"></tr>
+      <tr
+        mat-row
+        *matRowDef="let row; columns: colunas; let i = index"
+        animate.enter="item-entra"
+        [style.animation-delay.ms]="(i < 12 ? i : 12) * 25"
+      ></tr>
     </table>
+  } @else if (carregou()) {
+    <div class="vazio">
+      <mat-icon>badge</mat-icon>
+      <p>Nenhum aluno com esses filtros.</p>
+    </div>
   }
 }

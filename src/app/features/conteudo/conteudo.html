@@ -27,16 +27,14 @@
   <p class="erro">{{ erro() }}</p>
 }
 
-@if (!carregando() && !erro()) {
-  @if (registros().length === 0) {
-    <div class="vazio">
-      <mat-icon>menu_book</mat-icon>
-      <p>Nenhum conteúdo registrado ainda.</p>
-    </div>
-  } @else {
+@if (!erro()) {
+  @if (registros().length > 0) {
     <ul class="lista">
-      @for (r of registros(); track r.id) {
-        <li>
+      @for (r of registros(); track r.id; let i = $index) {
+        <li
+          animate.enter="item-entra"
+          [style.animation-delay.ms]="(i < 12 ? i : 12) * 30"
+        >
           <div class="meta">
             <span class="data">{{ r.data | date: 'dd/MM/yyyy' }}</span>
             <span class="turma">{{ r.turma?.nome ?? '—' }}</span>
@@ -52,5 +50,10 @@
         </li>
       }
     </ul>
+  } @else if (carregou()) {
+    <div class="vazio">
+      <mat-icon>menu_book</mat-icon>
+      <p>Nenhum conteúdo registrado ainda.</p>
+    </div>
   }
 }

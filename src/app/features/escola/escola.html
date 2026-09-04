@@ -1,7 +1,9 @@
-<h1>Dados da escola</h1>
-<p class="sub">
-  Nome e endereço usados nos cabeçalhos dos relatórios impressos.
-</p>
+<header class="page-head">
+  <div>
+    <h1>Dados da escola</h1>
+    <p>Nome e endereço usados nos cabeçalhos dos relatórios impressos.</p>
+  </div>
+</header>
 
 @if (carregando()) {
   <mat-progress-bar mode="indeterminate" />
@@ -12,8 +14,8 @@
   <button mat-stroked-button (click)="carregar()">Tentar de novo</button>
 }
 
-@if (!carregando() && !erro()) {
-  <form class="form" [formGroup]="form" (ngSubmit)="salvar()">
+@if (carregou() && !erro()) {
+  <form class="form card" [formGroup]="form" (ngSubmit)="salvar()">
     <mat-form-field>
       <mat-label>Nome da escola</mat-label>
       <input matInput formControlName="nome" />

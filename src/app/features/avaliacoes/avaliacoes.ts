@@ -12,6 +12,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { TurmasService } from '../../core/services/turmas.service';
 import { AlunosService } from '../../core/services/alunos.service';
 import { AvaliacoesService } from '../../core/services/avaliacoes.service';
+import { iniciarCarregamento } from '../../core/util/carregamento';
 import { Turma } from '../../core/models/turma.model';
 import { Aluno } from '../../core/models/aluno.model';
 import { Avaliacao } from '../../core/models/avaliacao.model';
@@ -49,7 +50,8 @@ export class Avaliacoes {
   readonly turmas = signal<Turma[]>([]);
   readonly alunos = signal<Aluno[]>([]);
   readonly registros = signal<Avaliacao[]>([]);
-  readonly carregando = signal(true);
+  readonly carregando = signal(false);
+  readonly carregou = signal(false);
   readonly erro = signal<string | null>(null);
 
   filtroTurma = '';
@@ -61,8 +63,8 @@ export class Avaliacoes {
   }
 
   carregar(): void {
-    this.carregando.set(true);
     this.erro.set(null);
+    const fim = iniciarCarregamento(this.carregando);
     this.service
       .listar({
         turmaId: this.filtroTurma || undefined,
@@ -71,11 +73,13 @@ export class Avaliacoes {
       .subscribe({
         next: (l) => {
           this.registros.set(l);
-          this.carregando.set(false);
+          this.carregou.set(true);
+          fim();
         },
         error: () => {
           this.erro.set('Não foi possível carregar as avaliações.');
-          this.carregando.set(false);
+          this.carregou.set(true);
+          fim();
         },
       });
   }

@@ -43,16 +43,14 @@
   <p class="erro">{{ erro() }}</p>
 }
 
-@if (!carregando() && !erro()) {
-  @if (registros().length === 0) {
-    <div class="vazio">
-      <mat-icon>rate_review</mat-icon>
-      <p>Nenhuma avaliação registrada.</p>
-    </div>
-  } @else {
+@if (!erro()) {
+  @if (registros().length > 0) {
     <ul class="lista">
-      @for (a of registros(); track a.id) {
-        <li>
+      @for (a of registros(); track a.id; let i = $index) {
+        <li
+          animate.enter="item-entra"
+          [style.animation-delay.ms]="(i < 12 ? i : 12) * 30"
+        >
           <div class="meta">
             <span class="aluno">{{ a.aluno?.nome ?? '—' }}</span>
             <span class="chip">{{ a.referencia }}</span>
@@ -69,5 +67,10 @@
         </li>
       }
     </ul>
+  } @else if (carregou()) {
+    <div class="vazio">
+      <mat-icon>rate_review</mat-icon>
+      <p>Nenhuma avaliação registrada.</p>
+    </div>
   }
 }

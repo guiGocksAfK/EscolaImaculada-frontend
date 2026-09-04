@@ -12,6 +12,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { TurmasService } from '../../core/services/turmas.service';
 import { ConteudoService } from '../../core/services/conteudo.service';
+import { iniciarCarregamento } from '../../core/util/carregamento';
 import { Turma } from '../../core/models/turma.model';
 import { RegistroConteudo } from '../../core/models/conteudo.model';
 import {
@@ -47,7 +48,8 @@ export class Conteudo {
 
   readonly turmas = signal<Turma[]>([]);
   readonly registros = signal<RegistroConteudo[]>([]);
-  readonly carregando = signal(true);
+  readonly carregando = signal(false);
+  readonly carregou = signal(false);
   readonly erro = signal<string | null>(null);
 
   filtroTurma = '';
@@ -58,16 +60,18 @@ export class Conteudo {
   }
 
   carregar(): void {
-    this.carregando.set(true);
     this.erro.set(null);
+    const fim = iniciarCarregamento(this.carregando);
     this.service.listar({ turmaId: this.filtroTurma || undefined }).subscribe({
       next: (l) => {
         this.registros.set(l);
-        this.carregando.set(false);
+        this.carregou.set(true);
+        fim();
       },
       error: () => {
         this.erro.set('Não foi possível carregar os registros.');
-        this.carregando.set(false);
+        this.carregou.set(true);
+        fim();
       },
     });
   }
