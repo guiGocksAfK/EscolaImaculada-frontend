@@ -8,14 +8,20 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 import { ChamadaService } from '../../../core/services/chamada.service';
+import { FaltasJustificadasService } from '../../../core/services/faltas-justificadas.service';
 import { iniciarCarregamento } from '../../../core/util/carregamento';
 import { toISODate } from '../../../core/date/iso-date';
 import { ChamadaMensal as ChamadaMensalModel } from '../../../core/models/chamada.model';
+
+function chaveJustificada(alunoId: string, data: string): string {
+  return `${alunoId}|${data}`;
+}
 
 @Component({
   selector: 'app-chamada-mensal',
@@ -30,6 +36,7 @@ import { ChamadaMensal as ChamadaMensalModel } from '../../../core/models/chamad
 })
 export class ChamadaMensal {
   private readonly chamadaService = inject(ChamadaService);
+  private readonly faltasService = inject(FaltasJustificadasService);
 
   readonly meses = [
     'Janeiro',
@@ -50,6 +57,7 @@ export class ChamadaMensal {
   readonly turmaId = input<string>('');
 
   readonly dados = signal<ChamadaMensalModel | null>(null);
+  readonly justificadas = signal<Set<string>>(new Set());
   readonly carregando = signal(false);
 
   readonly hoje = toISODate(new Date());
@@ -74,9 +82,15 @@ export class ChamadaMensal {
     if (!turmaId) return;
     const fim = iniciarCarregamento(this.carregando);
     this.dados.set(null);
-    this.chamadaService.getMes(turmaId, this.ano, this.mes).subscribe({
-      next: (d) => {
-        this.dados.set(d);
+    forkJoin({
+      dados: this.chamadaService.getMes(turmaId, this.ano, this.mes),
+      justificadas: this.faltasService.listar({ turmaId }),
+    }).subscribe({
+      next: ({ dados, justificadas }) => {
+        this.dados.set(dados);
+        this.justificadas.set(
+          new Set(justificadas.map((f) => chaveJustificada(f.alunoId, f.data))),
+        );
         fim();
         this.rolarParaHoje();
       },
@@ -86,6 +100,15 @@ export class ChamadaMensal {
 
   diaCurto(iso: string): string {
     return iso.slice(8, 10);
+  }
+
+  ehJustificada(alunoId: string, dia: string): boolean {
+    return this.justificadas().has(chaveJustificada(alunoId, dia));
+  }
+
+  celulaTexto(status: string | null, alunoId: string, dia: string): string {
+    if (status === 'F' && this.ehJustificada(alunoId, dia)) return 'FJ';
+    return status ?? '·';
   }
 
   private rolarParaHoje(): void {

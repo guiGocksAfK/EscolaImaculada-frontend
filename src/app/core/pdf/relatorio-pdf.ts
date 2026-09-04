@@ -100,6 +100,7 @@ export function baixarResumoPdf(resumo: RelatorioResumo): void {
 export function baixarChamadaMensalPdf(
   dados: ChamadaMensal,
   turmaNome: string,
+  justificadas: Set<string> = new Set(),
 ): void {
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
   usarFonteUnicode(doc);
@@ -109,12 +110,21 @@ export function baixarChamadaMensalPdf(
     `${MESES[dados.mes - 1]} de ${dados.ano} · emitido em ${new Date().toLocaleDateString('pt-BR')}`,
   );
 
+  const celula = (
+    l: ChamadaMensal['linhas'][number],
+    dia: string,
+  ): string => {
+    const status = l.porDia[dia];
+    if (status === 'F' && justificadas.has(`${l.alunoId}|${dia}`)) return 'FJ';
+    return status ?? '·';
+  };
+
   autoTable(doc, {
     startY: y,
     head: [['Aluno', ...dados.dias.map((d) => d.slice(8, 10)), 'Faltas']],
     body: dados.linhas.map((l) => [
       l.alunoNome,
-      ...dados.dias.map((d) => l.porDia[d] ?? '·'),
+      ...dados.dias.map((d) => celula(l, d)),
       String(l.totalFaltas),
     ]),
     styles: { font: FONTE, fontStyle: 'normal', fontSize: 7, cellPadding: 1, halign: 'center' },
@@ -125,7 +135,7 @@ export function baixarChamadaMensalPdf(
   doc.setFontSize(8);
   doc.setTextColor(120);
   doc.text(
-    'C = compareceu · F = falta · D = desistente · · = sem registro',
+    'C = compareceu · F = falta · FJ = falta justificada · D = desistente · · = sem registro',
     14,
     fimDaTabela(doc) + 6,
   );

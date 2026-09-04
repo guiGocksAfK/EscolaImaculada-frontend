@@ -110,23 +110,34 @@ export class FaltaFormDialog implements OnInit {
     });
   }
 
+  /** Incrementado a cada chamada — descarta respostas de buscas antigas que
+   * cheguem fora de ordem (ex.: trocar de turma rápido), evitando misturar
+   * alunos de uma turma com a busca de outra. */
+  private cargaId = 0;
+
   private carregarAlunos(turmaId: string): void {
+    const idCarga = ++this.cargaId;
     const dataVal = this.form.controls.data.value;
     if (!dataVal) {
-      this.alunosService
-        .listar({ turmaId })
-        .subscribe((l) => this.alunos.set(l));
+      this.alunosService.listar({ turmaId }).subscribe((l) => {
+        if (idCarga !== this.cargaId) return;
+        this.alunos.set(l);
+      });
       return;
     }
 
     const iso = toISODate(dataVal);
-    const fim = () => this.carregandoAlunos.set(false);
+    const fim = () => {
+      if (idCarga === this.cargaId) this.carregandoAlunos.set(false);
+    };
     this.carregandoAlunos.set(true);
     forkJoin({
       alunos: this.alunosService.listar({ turmaId }),
       dia: this.chamadaService.getDia(turmaId, iso),
     }).subscribe({
       next: ({ alunos, dia }) => {
+        fim();
+        if (idCarga !== this.cargaId) return;
         const comFalta = new Set(
           dia.registros
             .filter((r) => r.status === 'F')
@@ -136,11 +147,11 @@ export class FaltaFormDialog implements OnInit {
         this.alunos.set(
           alunos.filter((a) => comFalta.has(a.id) || a.id === alunoAtualId),
         );
-        fim();
       },
       error: () => {
-        this.alunos.set([]);
         fim();
+        if (idCarga !== this.cargaId) return;
+        this.alunos.set([]);
       },
     });
   }

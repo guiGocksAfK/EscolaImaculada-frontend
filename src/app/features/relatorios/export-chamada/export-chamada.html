@@ -68,8 +68,9 @@
                   class="cel"
                   [class.f]="linha.porDia[dia] === 'F'"
                   [class.d]="linha.porDia[dia] === 'D'"
+                  [class.j]="ehJustificada(linha.alunoId, dia)"
                 >
-                  {{ linha.porDia[dia] ?? '·' }}
+                  {{ celulaTexto(linha.porDia[dia], linha.alunoId, dia) }}
                 </td>
               }
               <td class="col-total">{{ linha.totalFaltas }}</td>
@@ -78,5 +79,8 @@
         </tbody>
       </table>
     </div>
+    <p class="legenda">
+      C = compareceu · F = falta · FJ = falta justificada · D = desistente · · = sem registro
+    </p>
   }
 }
