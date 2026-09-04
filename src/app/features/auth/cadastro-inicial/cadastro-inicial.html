@@ -1,0 +1,144 @@
+<div class="cadastro-wrap">
+  <form class="card" [formGroup]="form" (ngSubmit)="enviar()">
+    <div class="header">
+      <mat-icon>apartment</mat-icon>
+      <h1>Primeiro acesso</h1>
+      <p>Cadastre a escola e a conta da diretora</p>
+    </div>
+
+    <fieldset formGroupName="escola">
+      <legend>Escola</legend>
+
+      <mat-form-field>
+        <mat-label>Nome da escola</mat-label>
+        <input matInput formControlName="nome" autocomplete="organization" />
+        @if (escola.controls.nome.touched && escola.controls.nome.invalid) {
+          <mat-error>Informe o nome da escola.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Endereço</mat-label>
+        <input
+          matInput
+          formControlName="endereco"
+          autocomplete="street-address"
+        />
+        @if (
+          escola.controls.endereco.touched && escola.controls.endereco.invalid
+        ) {
+          <mat-error>Informe o endereço.</mat-error>
+        }
+      </mat-form-field>
+    </fieldset>
+
+    <fieldset formGroupName="diretora">
+      <legend>Diretora</legend>
+
+      <mat-form-field>
+        <mat-label>Nome completo</mat-label>
+        <input matInput formControlName="nome" autocomplete="name" />
+        @if (diretora.controls.nome.touched && diretora.controls.nome.invalid) {
+          <mat-error>Informe o nome.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>CPF</mat-label>
+        <input
+          matInput
+          formControlName="cpf"
+          inputmode="numeric"
+          autocomplete="off"
+          maxlength="11"
+          placeholder="Somente números"
+        />
+        @if (diretora.controls.cpf.touched && diretora.controls.cpf.invalid) {
+          <mat-error>Informe o CPF (11 dígitos, sem pontuação).</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Data de nascimento</mat-label>
+        <input
+          matInput
+          [matDatepicker]="picker"
+          formControlName="dataNascimento"
+        />
+        <mat-datepicker-toggle matIconSuffix [for]="picker" />
+        <mat-datepicker #picker />
+        @if (
+          diretora.controls.dataNascimento.touched &&
+          diretora.controls.dataNascimento.invalid
+        ) {
+          <mat-error>Informe a data de nascimento.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Senha</mat-label>
+        <input
+          matInput
+          formControlName="senha"
+          [type]="esconderSenha() ? 'password' : 'text'"
+          autocomplete="new-password"
+        />
+        <button
+          type="button"
+          mat-icon-button
+          matSuffix
+          (click)="esconderSenha.set(!esconderSenha())"
+          [attr.aria-label]="esconderSenha() ? 'Mostrar senha' : 'Ocultar senha'"
+        >
+          <mat-icon>{{
+            esconderSenha() ? 'visibility' : 'visibility_off'
+          }}</mat-icon>
+        </button>
+        @if (
+          diretora.controls.senha.touched && diretora.controls.senha.invalid
+        ) {
+          <mat-error>A senha precisa ter ao menos 6 caracteres.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Confirmar senha</mat-label>
+        <input
+          matInput
+          formControlName="confirmarSenha"
+          [type]="esconderSenha() ? 'password' : 'text'"
+          autocomplete="new-password"
+        />
+        @if (
+          diretora.controls.confirmarSenha.touched &&
+          diretora.errors?.['senhasDiferentes']
+        ) {
+          <mat-error>As senhas não conferem.</mat-error>
+        }
+      </mat-form-field>
+    </fieldset>
+
+    @if (erro()) {
+      <p class="erro">{{ erro() }}</p>
+    }
+
+    <button
+      mat-flat-button
+      color="primary"
+      type="submit"
+      class="submit"
+      [disabled]="carregando()"
+    >
+      @if (carregando()) {
+        <mat-spinner diameter="20" />
+      } @else {
+        <ng-container>
+          <mat-icon>check</mat-icon>
+          Cadastrar e entrar
+        </ng-container>
+      }
+    </button>
+
+    <a routerLink="/login" class="secondary">Já tem conta? Voltar ao login</a>
+  </form>
+</div>

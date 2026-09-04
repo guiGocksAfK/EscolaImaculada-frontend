@@ -21,8 +21,6 @@ import {
 import { routes } from './app.routes';
 import { BrDateAdapter } from './core/date/br-date-adapter';
 import { authInterceptor } from './core/auth/auth.interceptor';
-import { mockAuthInterceptor } from './core/auth/mock/mock-auth.interceptor';
-import { mockApiInterceptor } from './core/auth/mock/mock-api.interceptor';
 
 registerLocaleData(localePt);
 
@@ -34,13 +32,7 @@ export const appConfig: ApplicationConfig = {
       withComponentInputBinding(),
       withViewTransitions({ skipInitialTransition: true }),
     ),
-    provideHttpClient(
-      withInterceptors([
-        authInterceptor,
-        mockAuthInterceptor,
-        mockApiInterceptor,
-      ]),
-    ),
+    provideHttpClient(withInterceptors([authInterceptor])),
     provideNativeDateAdapter(),
     { provide: DateAdapter, useClass: BrDateAdapter },
     { provide: LOCALE_ID, useValue: 'pt-BR' },
