@@ -14,6 +14,10 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { TurmasService } from '../../../core/services/turmas.service';
 import { FaltasJustificadasService } from '../../../core/services/faltas-justificadas.service';
 import { iniciarCarregamento } from '../../../core/util/carregamento';
+import {
+  lerPreferencia,
+  salvarPreferencia,
+} from '../../../core/util/preferencias';
 import { Turma } from '../../../core/models/turma.model';
 import { FaltaJustificada } from '../../../core/models/falta-justificada.model';
 import {
@@ -55,15 +59,22 @@ export class Faltas {
   readonly carregou = signal(false);
   readonly erro = signal<string | null>(null);
 
-  filtroTurma = '';
+  filtroTurma = lerPreferencia<string>('faltas.filtroTurma') ?? '';
 
   constructor() {
-    this.turmasService.listar().subscribe((l) => this.turmas.set(l));
+    this.turmasService.listar().subscribe((l) => {
+      this.turmas.set(l);
+      if (this.filtroTurma && !l.some((t) => t.id === this.filtroTurma)) {
+        this.filtroTurma = '';
+        this.carregar();
+      }
+    });
     this.carregar();
   }
 
   carregar(): void {
     this.erro.set(null);
+    salvarPreferencia('faltas.filtroTurma', this.filtroTurma);
     const fim = iniciarCarregamento(this.carregando);
     this.service.listar({ turmaId: this.filtroTurma || undefined }).subscribe({
       next: (l) => {

@@ -16,6 +16,10 @@ import { AuthService } from '../../core/auth/auth.service';
 import { AlunosService } from '../../core/services/alunos.service';
 import { TurmasService } from '../../core/services/turmas.service';
 import { iniciarCarregamento } from '../../core/util/carregamento';
+import {
+  lerPreferencia,
+  salvarPreferencia,
+} from '../../core/util/preferencias';
 import { Turma } from '../../core/models/turma.model';
 import {
   Aluno,
@@ -67,18 +71,27 @@ export class Alunos {
   readonly carregou = signal(false);
   readonly erro = signal<string | null>(null);
 
-  filtroTurma = '';
-  filtroStatus: StatusAluno | '' = 'ATIVO';
+  filtroTurma = lerPreferencia<string>('alunos.filtroTurma') ?? '';
+  filtroStatus: StatusAluno | '' =
+    lerPreferencia<StatusAluno | ''>('alunos.filtroStatus') ?? 'ATIVO';
 
   readonly podeExcluir = computed(() => this.auth.hasPapel('DIRETORA'));
 
   constructor() {
-    this.turmasService.listar().subscribe((l) => this.turmas.set(l));
+    this.turmasService.listar().subscribe((l) => {
+      this.turmas.set(l);
+      if (this.filtroTurma && !l.some((t) => t.id === this.filtroTurma)) {
+        this.filtroTurma = '';
+        this.carregar();
+      }
+    });
     this.carregar();
   }
 
   carregar(): void {
     this.erro.set(null);
+    salvarPreferencia('alunos.filtroTurma', this.filtroTurma);
+    salvarPreferencia('alunos.filtroStatus', this.filtroStatus);
     const fim = iniciarCarregamento(this.carregando);
     this.alunosService
       .listar({

@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -22,6 +22,10 @@ import {
 } from '../../../core/models/chamada.model';
 import { toISODate } from '../../../core/date/iso-date';
 import { iniciarCarregamento } from '../../../core/util/carregamento';
+import {
+  lerPreferencia,
+  salvarPreferencia,
+} from '../../../core/util/preferencias';
 
 @Component({
   selector: 'app-chamada-dia',
@@ -59,27 +63,38 @@ export class ChamadaDia {
   /** alunoId -> status do dia */
   marcacoes: Record<string, StatusDia> = {};
 
-  readonly resumo = computed(() => {
+  readonly resumo = signal({ C: 0, F: 0, D: 0 });
+
+  private atualizarResumo(): void {
     const vals = Object.values(this.marcacoes);
-    return {
+    this.resumo.set({
       C: vals.filter((v) => v === 'C').length,
       F: vals.filter((v) => v === 'F').length,
       D: vals.filter((v) => v === 'D').length,
-    };
-  });
+    });
+  }
+
+  onMarcacaoChange(alunoId: string, status: StatusDia): void {
+    this.marcacoes[alunoId] = status;
+    this.atualizarResumo();
+  }
 
   constructor() {
     this.turmasService.listar().subscribe((l) => {
       this.turmas.set(l);
+      const ultima = lerPreferencia<string>('chamada-dia.turmaId');
       if (l.length === 1) {
         this.turmaId = l[0].id;
-        this.carregar();
+      } else if (ultima && l.some((t) => t.id === ultima)) {
+        this.turmaId = ultima;
       }
+      if (this.turmaId) this.carregar();
     });
   }
 
   carregar(): void {
     if (!this.turmaId) return;
+    salvarPreferencia('chamada-dia.turmaId', this.turmaId);
     const iso = toISODate(this.data);
     const fim = iniciarCarregamento(this.carregando);
 
@@ -97,6 +112,7 @@ export class ChamadaDia {
         const m: Record<string, StatusDia> = {};
         for (const a of alunos) m[a.id] = prev.get(a.id) ?? 'C';
         this.marcacoes = m;
+        this.atualizarResumo();
         fim();
       },
       error: () => {
@@ -112,6 +128,7 @@ export class ChamadaDia {
     const m: Record<string, StatusDia> = {};
     for (const a of this.alunos()) m[a.id] = status;
     this.marcacoes = m;
+    this.atualizarResumo();
   }
 
   salvar(): void {

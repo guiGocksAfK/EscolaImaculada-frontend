@@ -13,6 +13,10 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { TurmasService } from '../../core/services/turmas.service';
 import { ConteudoService } from '../../core/services/conteudo.service';
 import { iniciarCarregamento } from '../../core/util/carregamento';
+import {
+  lerPreferencia,
+  salvarPreferencia,
+} from '../../core/util/preferencias';
 import { Turma } from '../../core/models/turma.model';
 import { RegistroConteudo } from '../../core/models/conteudo.model';
 import {
@@ -52,15 +56,22 @@ export class Conteudo {
   readonly carregou = signal(false);
   readonly erro = signal<string | null>(null);
 
-  filtroTurma = '';
+  filtroTurma = lerPreferencia<string>('conteudo.filtroTurma') ?? '';
 
   constructor() {
-    this.turmasService.listar().subscribe((l) => this.turmas.set(l));
+    this.turmasService.listar().subscribe((l) => {
+      this.turmas.set(l);
+      if (this.filtroTurma && !l.some((t) => t.id === this.filtroTurma)) {
+        this.filtroTurma = '';
+        this.carregar();
+      }
+    });
     this.carregar();
   }
 
   carregar(): void {
     this.erro.set(null);
+    salvarPreferencia('conteudo.filtroTurma', this.filtroTurma);
     const fim = iniciarCarregamento(this.carregando);
     this.service.listar({ turmaId: this.filtroTurma || undefined }).subscribe({
       next: (l) => {

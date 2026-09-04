@@ -12,6 +12,10 @@ import { Turma } from '../../../core/models/turma.model';
 import { ChamadaMensal } from '../../../core/models/chamada.model';
 import { baixarChamadaMensalPdf } from '../../../core/pdf/relatorio-pdf';
 import { iniciarCarregamento } from '../../../core/util/carregamento';
+import {
+  lerPreferencia,
+  salvarPreferencia,
+} from '../../../core/util/preferencias';
 
 @Component({
   selector: 'app-export-chamada',
@@ -51,16 +55,19 @@ export class ExportChamada {
   readonly carregando = signal(false);
 
   turmaId = '';
-  mes = new Date().getMonth() + 1;
-  ano = new Date().getFullYear();
+  mes = lerPreferencia<number>('export-chamada.mes') ?? new Date().getMonth() + 1;
+  ano = lerPreferencia<number>('export-chamada.ano') ?? new Date().getFullYear();
 
   constructor() {
     this.turmasService.listar().subscribe((l) => {
       this.turmas.set(l);
+      const ultima = lerPreferencia<string>('export-chamada.turmaId');
       if (l.length === 1) {
         this.turmaId = l[0].id;
-        this.carregar();
+      } else if (ultima && l.some((t) => t.id === ultima)) {
+        this.turmaId = ultima;
       }
+      if (this.turmaId) this.carregar();
     });
   }
 
@@ -70,6 +77,9 @@ export class ExportChamada {
 
   carregar(): void {
     if (!this.turmaId) return;
+    salvarPreferencia('export-chamada.turmaId', this.turmaId);
+    salvarPreferencia('export-chamada.mes', this.mes);
+    salvarPreferencia('export-chamada.ano', this.ano);
     const fim = iniciarCarregamento(this.carregando);
     this.dados.set(null);
     this.chamadaService.getMes(this.turmaId, this.ano, this.mes).subscribe({

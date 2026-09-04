@@ -7,6 +7,10 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TurmasService } from '../../../core/services/turmas.service';
 import { ChamadaService } from '../../../core/services/chamada.service';
 import { iniciarCarregamento } from '../../../core/util/carregamento';
+import {
+  lerPreferencia,
+  salvarPreferencia,
+} from '../../../core/util/preferencias';
 import { Turma } from '../../../core/models/turma.model';
 import { ChamadaMensal as ChamadaMensalModel } from '../../../core/models/chamada.model';
 
@@ -46,21 +50,27 @@ export class ChamadaMensal {
   readonly carregando = signal(false);
 
   turmaId = '';
-  mes = new Date().getMonth() + 1;
-  ano = new Date().getFullYear();
+  mes = lerPreferencia<number>('chamada-mensal.mes') ?? new Date().getMonth() + 1;
+  ano = lerPreferencia<number>('chamada-mensal.ano') ?? new Date().getFullYear();
 
   constructor() {
     this.turmasService.listar().subscribe((l) => {
       this.turmas.set(l);
+      const ultima = lerPreferencia<string>('chamada-mensal.turmaId');
       if (l.length === 1) {
         this.turmaId = l[0].id;
-        this.carregar();
+      } else if (ultima && l.some((t) => t.id === ultima)) {
+        this.turmaId = ultima;
       }
+      if (this.turmaId) this.carregar();
     });
   }
 
   carregar(): void {
     if (!this.turmaId) return;
+    salvarPreferencia('chamada-mensal.turmaId', this.turmaId);
+    salvarPreferencia('chamada-mensal.mes', this.mes);
+    salvarPreferencia('chamada-mensal.ano', this.ano);
     const fim = iniciarCarregamento(this.carregando);
     this.dados.set(null);
     this.chamadaService.getMes(this.turmaId, this.ano, this.mes).subscribe({

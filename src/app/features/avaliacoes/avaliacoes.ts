@@ -13,6 +13,10 @@ import { TurmasService } from '../../core/services/turmas.service';
 import { AlunosService } from '../../core/services/alunos.service';
 import { AvaliacoesService } from '../../core/services/avaliacoes.service';
 import { iniciarCarregamento } from '../../core/util/carregamento';
+import {
+  lerPreferencia,
+  salvarPreferencia,
+} from '../../core/util/preferencias';
 import { Turma } from '../../core/models/turma.model';
 import { Aluno } from '../../core/models/aluno.model';
 import { Avaliacao } from '../../core/models/avaliacao.model';
@@ -54,16 +58,37 @@ export class Avaliacoes {
   readonly carregou = signal(false);
   readonly erro = signal<string | null>(null);
 
-  filtroTurma = '';
-  filtroAluno = '';
+  filtroTurma = lerPreferencia<string>('avaliacoes.filtroTurma') ?? '';
+  filtroAluno = lerPreferencia<string>('avaliacoes.filtroAluno') ?? '';
 
   constructor() {
-    this.turmasService.listar().subscribe((l) => this.turmas.set(l));
+    this.turmasService.listar().subscribe((l) => {
+      this.turmas.set(l);
+      if (this.filtroTurma && !l.some((t) => t.id === this.filtroTurma)) {
+        this.filtroTurma = '';
+        this.filtroAluno = '';
+      }
+      if (this.filtroTurma) {
+        this.alunosService
+          .listar({ turmaId: this.filtroTurma })
+          .subscribe((alunos) => {
+            this.alunos.set(alunos);
+            if (
+              this.filtroAluno &&
+              !alunos.some((a) => a.id === this.filtroAluno)
+            ) {
+              this.filtroAluno = '';
+            }
+          });
+      }
+    });
     this.carregar();
   }
 
   carregar(): void {
     this.erro.set(null);
+    salvarPreferencia('avaliacoes.filtroTurma', this.filtroTurma);
+    salvarPreferencia('avaliacoes.filtroAluno', this.filtroAluno);
     const fim = iniciarCarregamento(this.carregando);
     this.service
       .listar({
