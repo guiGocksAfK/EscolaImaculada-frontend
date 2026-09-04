@@ -1,15 +1,23 @@
 <div class="filtros">
-  <mat-form-field>
-    <mat-label>Data</mat-label>
-    <input
-      matInput
-      [matDatepicker]="dp"
-      [(ngModel)]="data"
-      (ngModelChange)="carregar()"
-    />
-    <mat-datepicker-toggle matIconSuffix [for]="dp" />
-    <mat-datepicker #dp />
-  </mat-form-field>
+  <div class="nav-data">
+    <button mat-icon-button (click)="diaAnterior()" matTooltip="Dia anterior">
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+    <mat-form-field>
+      <mat-label>Data</mat-label>
+      <input
+        matInput
+        [matDatepicker]="dp"
+        [(ngModel)]="data"
+        (ngModelChange)="carregar()"
+      />
+      <mat-datepicker-toggle matIconSuffix [for]="dp" />
+      <mat-datepicker #dp />
+    </mat-form-field>
+    <button mat-icon-button (click)="diaSeguinte()" matTooltip="Próximo dia">
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+  </div>
 </div>
 
 @if (carregando()) {
@@ -23,7 +31,9 @@
 } @else if (!carregando()) {
   <div class="barra">
     <div class="resumo">
-      @if (jaLancada()) {
+      @if (somenteLeitura()) {
+        <span class="tag tag--leitura">Somente visualização</span>
+      } @else if (jaLancada()) {
         <span class="tag tag--ok">Chamada já lançada — editando</span>
       }
       <span>Presentes: <strong>{{ resumo().C }}</strong></span>
@@ -41,6 +51,7 @@
         <mat-button-toggle-group
           [ngModel]="marcacoes[a.id]"
           (ngModelChange)="onMarcacaoChange(a.id, $event)"
+          [disabled]="somenteLeitura()"
           hideSingleSelectionIndicator
         >
           @for (s of statusOpcoes; track s) {
@@ -58,16 +69,18 @@
     }
   </ul>
 
-  <div class="acoes">
-    <button
-      mat-flat-button
-      color="primary"
-      (click)="salvar()"
-      [disabled]="salvando()"
-    >
-      {{ salvando() ? 'Salvando…' : 'Salvar chamada' }}
-    </button>
-  </div>
+  @if (!somenteLeitura()) {
+    <div class="acoes">
+      <button
+        mat-flat-button
+        color="primary"
+        (click)="salvar()"
+        [disabled]="salvando()"
+      >
+        {{ salvando() ? 'Salvando…' : 'Salvar chamada' }}
+      </button>
+    </div>
+  }
 
   <p class="legenda">C = compareceu · F = falta</p>
 }

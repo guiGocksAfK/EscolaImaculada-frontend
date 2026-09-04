@@ -1,4 +1,12 @@
-import { Component, effect, inject, input, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  effect,
+  inject,
+  input,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -10,6 +18,7 @@ import {
   lerPreferencia,
   salvarPreferencia,
 } from '../../../core/util/preferencias';
+import { toISODate } from '../../../core/date/iso-date';
 import { ChamadaMensal as ChamadaMensalModel } from '../../../core/models/chamada.model';
 
 @Component({
@@ -47,6 +56,10 @@ export class ChamadaMensal {
   readonly dados = signal<ChamadaMensalModel | null>(null);
   readonly carregando = signal(false);
 
+  readonly hoje = toISODate(new Date());
+  private readonly scrollBox =
+    viewChild<ElementRef<HTMLDivElement>>('scrollBox');
+
   mes = lerPreferencia<number>('chamada-mensal.mes') ?? new Date().getMonth() + 1;
   ano = lerPreferencia<number>('chamada-mensal.ano') ?? new Date().getFullYear();
 
@@ -71,6 +84,7 @@ export class ChamadaMensal {
       next: (d) => {
         this.dados.set(d);
         fim();
+        this.rolarParaHoje();
       },
       error: () => fim(),
     });
@@ -78,5 +92,13 @@ export class ChamadaMensal {
 
   diaCurto(iso: string): string {
     return iso.slice(8, 10);
+  }
+
+  private rolarParaHoje(): void {
+    setTimeout(() => {
+      this.scrollBox()
+        ?.nativeElement.querySelector<HTMLElement>('.hoje')
+        ?.scrollIntoView({ inline: 'center', block: 'nearest' });
+    });
   }
 }

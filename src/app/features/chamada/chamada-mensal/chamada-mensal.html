@@ -28,13 +28,13 @@
   @if (d.dias.length === 0) {
     <p class="dica">Nenhuma chamada lançada neste mês.</p>
   } @else {
-    <div class="scroll">
+    <div class="scroll" #scrollBox>
       <table class="grade">
         <thead>
           <tr>
             <th class="col-nome">Aluno</th>
             @for (dia of d.dias; track dia) {
-              <th>{{ diaCurto(dia) }}</th>
+              <th [class.hoje]="dia === hoje">{{ diaCurto(dia) }}</th>
             }
             <th class="col-total">Faltas</th>
           </tr>
@@ -48,6 +48,7 @@
                   class="cel"
                   [class.f]="linha.porDia[dia] === 'F'"
                   [class.d]="linha.porDia[dia] === 'D'"
+                  [class.hoje]="dia === hoje"
                 >
                   {{ linha.porDia[dia] ?? '·' }}
                 </td>

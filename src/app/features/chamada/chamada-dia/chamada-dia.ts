@@ -7,7 +7,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { AlunosService } from '../../../core/services/alunos.service';
@@ -30,7 +32,9 @@ import { iniciarCarregamento } from '../../../core/util/carregamento';
     MatDatepickerModule,
     MatButtonModule,
     MatButtonToggleModule,
+    MatIconModule,
     MatProgressBarModule,
+    MatTooltipModule,
   ],
   templateUrl: './chamada-dia.html',
   styleUrl: './chamada-dia.scss',
@@ -66,8 +70,28 @@ export class ChamadaDia {
   }
 
   onMarcacaoChange(alunoId: string, status: StatusDia): void {
+    if (this.somenteLeitura()) return;
     this.marcacoes[alunoId] = status;
     this.atualizarResumo();
+  }
+
+  /** Só o dia de hoje pode ser lançado/editado — dias passados ou futuros são consulta. */
+  somenteLeitura(): boolean {
+    return toISODate(this.data) !== toISODate(new Date());
+  }
+
+  diaAnterior(): void {
+    const d = new Date(this.data);
+    d.setDate(d.getDate() - 1);
+    this.data = d;
+    this.carregar();
+  }
+
+  diaSeguinte(): void {
+    const d = new Date(this.data);
+    d.setDate(d.getDate() + 1);
+    this.data = d;
+    this.carregar();
   }
 
   constructor() {
@@ -114,7 +138,7 @@ export class ChamadaDia {
 
   salvar(): void {
     const turmaId = this.turmaId();
-    if (!turmaId || this.alunos().length === 0) return;
+    if (!turmaId || this.alunos().length === 0 || this.somenteLeitura()) return;
     this.salvando.set(true);
     this.chamadaService
       .salvarDia({
