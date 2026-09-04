@@ -16,10 +16,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { AlunosService } from '../../core/services/alunos.service';
 import { TurmasService } from '../../core/services/turmas.service';
 import { iniciarCarregamento } from '../../core/util/carregamento';
-import {
-  lerPreferencia,
-  salvarPreferencia,
-} from '../../core/util/preferencias';
+import { PreferenciasService } from '../../core/util/preferencias';
 import { Turma } from '../../core/models/turma.model';
 import {
   Aluno,
@@ -60,6 +57,7 @@ export class Alunos {
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
+  private readonly prefs = inject(PreferenciasService);
 
   readonly statusOpcoes = STATUS_ALUNO;
   readonly statusLabel = STATUS_ALUNO_LABEL;
@@ -71,9 +69,9 @@ export class Alunos {
   readonly carregou = signal(false);
   readonly erro = signal<string | null>(null);
 
-  filtroTurma = lerPreferencia<string>('alunos.filtroTurma') ?? '';
+  filtroTurma = this.prefs.ler<string>('alunos.filtroTurma') ?? '';
   filtroStatus: StatusAluno | '' =
-    lerPreferencia<StatusAluno | ''>('alunos.filtroStatus') ?? 'ATIVO';
+    this.prefs.ler<StatusAluno | ''>('alunos.filtroStatus') ?? 'ATIVO';
 
   readonly podeGerenciar = computed(() => this.auth.hasPapel('DIRETORA'));
   readonly colunas = computed(() =>
@@ -93,8 +91,8 @@ export class Alunos {
 
   carregar(): void {
     this.erro.set(null);
-    salvarPreferencia('alunos.filtroTurma', this.filtroTurma);
-    salvarPreferencia('alunos.filtroStatus', this.filtroStatus);
+    this.prefs.salvar('alunos.filtroTurma', this.filtroTurma);
+    this.prefs.salvar('alunos.filtroStatus', this.filtroStatus);
     const fim = iniciarCarregamento(this.carregando);
     this.alunosService
       .listar({

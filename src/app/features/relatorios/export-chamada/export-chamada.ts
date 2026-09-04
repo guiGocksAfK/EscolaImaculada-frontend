@@ -12,10 +12,7 @@ import { Turma } from '../../../core/models/turma.model';
 import { ChamadaMensal } from '../../../core/models/chamada.model';
 import { baixarChamadaMensalPdf } from '../../../core/pdf/relatorio-pdf';
 import { iniciarCarregamento } from '../../../core/util/carregamento';
-import {
-  lerPreferencia,
-  salvarPreferencia,
-} from '../../../core/util/preferencias';
+import { PreferenciasService } from '../../../core/util/preferencias';
 
 @Component({
   selector: 'app-export-chamada',
@@ -33,6 +30,7 @@ import {
 export class ExportChamada {
   private readonly turmasService = inject(TurmasService);
   private readonly chamadaService = inject(ChamadaService);
+  private readonly prefs = inject(PreferenciasService);
 
   readonly meses = [
     'Janeiro',
@@ -55,13 +53,16 @@ export class ExportChamada {
   readonly carregando = signal(false);
 
   turmaId = '';
-  mes = lerPreferencia<number>('export-chamada.mes') ?? new Date().getMonth() + 1;
-  ano = lerPreferencia<number>('export-chamada.ano') ?? new Date().getFullYear();
+  mes =
+    this.prefs.ler<number>('export-chamada.mes') ??
+    new Date().getMonth() + 1;
+  ano =
+    this.prefs.ler<number>('export-chamada.ano') ?? new Date().getFullYear();
 
   constructor() {
     this.turmasService.listar().subscribe((l) => {
       this.turmas.set(l);
-      const ultima = lerPreferencia<string>('export-chamada.turmaId');
+      const ultima = this.prefs.ler<string>('export-chamada.turmaId');
       if (l.length === 1) {
         this.turmaId = l[0].id;
       } else if (ultima && l.some((t) => t.id === ultima)) {
@@ -77,9 +78,9 @@ export class ExportChamada {
 
   carregar(): void {
     if (!this.turmaId) return;
-    salvarPreferencia('export-chamada.turmaId', this.turmaId);
-    salvarPreferencia('export-chamada.mes', this.mes);
-    salvarPreferencia('export-chamada.ano', this.ano);
+    this.prefs.salvar('export-chamada.turmaId', this.turmaId);
+    this.prefs.salvar('export-chamada.mes', this.mes);
+    this.prefs.salvar('export-chamada.ano', this.ano);
     const fim = iniciarCarregamento(this.carregando);
     this.dados.set(null);
     this.chamadaService.getMes(this.turmaId, this.ano, this.mes).subscribe({

@@ -14,10 +14,6 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 import { ChamadaService } from '../../../core/services/chamada.service';
 import { iniciarCarregamento } from '../../../core/util/carregamento';
-import {
-  lerPreferencia,
-  salvarPreferencia,
-} from '../../../core/util/preferencias';
 import { toISODate } from '../../../core/date/iso-date';
 import { ChamadaMensal as ChamadaMensalModel } from '../../../core/models/chamada.model';
 
@@ -60,8 +56,8 @@ export class ChamadaMensal {
   private readonly scrollBox =
     viewChild<ElementRef<HTMLDivElement>>('scrollBox');
 
-  mes = lerPreferencia<number>('chamada-mensal.mes') ?? new Date().getMonth() + 1;
-  ano = lerPreferencia<number>('chamada-mensal.ano') ?? new Date().getFullYear();
+  mes = new Date().getMonth() + 1;
+  ano = new Date().getFullYear();
 
   constructor() {
     effect(() => {
@@ -76,8 +72,6 @@ export class ChamadaMensal {
   carregar(): void {
     const turmaId = this.turmaId();
     if (!turmaId) return;
-    salvarPreferencia('chamada-mensal.mes', this.mes);
-    salvarPreferencia('chamada-mensal.ano', this.ano);
     const fim = iniciarCarregamento(this.carregando);
     this.dados.set(null);
     this.chamadaService.getMes(turmaId, this.ano, this.mes).subscribe({

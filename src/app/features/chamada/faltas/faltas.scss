@@ -1,5 +1,126 @@
-.col-acoes {
-  text-align: right;
-  white-space: nowrap;
-  width: 1%;
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.head p {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant, #6b7280);
+  max-width: 44ch;
+}
+
+.busca {
+  width: 320px;
+  max-width: 100%;
+  margin: 0.75rem 0 0.5rem;
+}
+
+.erro {
+  color: #b3261e;
+}
+
+.vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 3rem 1rem;
+  color: var(--mat-sys-on-surface-variant, #6b7280);
+}
+
+.vazio mat-icon {
+  font-size: 2.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  opacity: 0.6;
+}
+
+.grupo {
+  margin-top: 1.5rem;
+}
+
+.grupo-titulo {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--mat-sys-on-surface-variant, #6b7280);
+}
+
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--mat-sys-outline-variant, #e5e7eb);
+  border-radius: 14px;
+  background: var(--mat-sys-surface, #fff);
+  transition: background 0.12s ease;
+}
+
+.card:hover {
+  background: color-mix(
+    in srgb,
+    var(--mat-sys-primary, #1565c0) 4%,
+    transparent
+  );
+}
+
+.card-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 3rem;
+  padding: 0.35rem 0;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--mat-sys-primary, #1565c0) 8%, #fff);
+  color: var(--mat-sys-primary, #1565c0);
+}
+
+.card-data .dia {
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.card-data .mes {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+}
+
+.card-corpo {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.card-aluno {
+  font-weight: 600;
+}
+
+.card-motivo {
+  margin: 0.2rem 0 0;
+  color: var(--mat-sys-on-surface-variant, #6b7280);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.card-acoes {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 0.15rem;
 }

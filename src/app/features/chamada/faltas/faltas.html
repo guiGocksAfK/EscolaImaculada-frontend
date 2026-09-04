@@ -6,6 +6,26 @@
   </button>
 </header>
 
+<mat-form-field class="busca" subscriptSizing="dynamic">
+  <mat-icon matPrefix>search</mat-icon>
+  <mat-label>Buscar aluno</mat-label>
+  <input
+    matInput
+    [ngModel]="busca()"
+    (ngModelChange)="busca.set($event)"
+  />
+  @if (busca()) {
+    <button
+      matSuffix
+      mat-icon-button
+      matTooltip="Limpar busca"
+      (click)="busca.set('')"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  }
+</mat-form-field>
+
 @if (carregando()) {
   <mat-progress-bar mode="indeterminate" />
 }
@@ -15,43 +35,43 @@
 }
 
 @if (!erro()) {
-  @if (registros().length > 0) {
-    <table mat-table [dataSource]="registros()" class="tabela">
-      <ng-container matColumnDef="data">
-        <th mat-header-cell *matHeaderCellDef>Data</th>
-        <td mat-cell *matCellDef="let f">{{ f.data | date: 'dd/MM/yyyy' }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="aluno">
-        <th mat-header-cell *matHeaderCellDef>Aluno</th>
-        <td mat-cell *matCellDef="let f">{{ f.aluno?.nome ?? '—' }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="motivo">
-        <th mat-header-cell *matHeaderCellDef>Motivo</th>
-        <td mat-cell *matCellDef="let f">{{ f.motivo }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="acoes">
-        <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let f" class="col-acoes">
-          <button mat-icon-button matTooltip="Editar" (click)="editar(f)">
-            <mat-icon>edit</mat-icon>
-          </button>
-          <button mat-icon-button matTooltip="Excluir" (click)="excluir(f)">
-            <mat-icon>delete</mat-icon>
-          </button>
-        </td>
-      </ng-container>
-
-      <tr mat-header-row *matHeaderRowDef="colunas"></tr>
-      <tr
-        mat-row
-        *matRowDef="let row; columns: colunas; let i = index"
-        animate.enter="item-entra"
-        [style.animation-delay.ms]="(i < 12 ? i : 12) * 25"
-      ></tr>
-    </table>
+  @if (grupos().length > 0) {
+    @for (grupo of grupos(); track grupo.chave) {
+      <section class="grupo">
+        <h2 class="grupo-titulo">{{ grupo.rotulo }}</h2>
+        <ul class="lista">
+          @for (f of grupo.itens; track f.id; let i = $index) {
+            <li
+              class="card"
+              animate.enter="item-entra"
+              [style.animation-delay.ms]="(i < 12 ? i : 12) * 20"
+            >
+              <div class="card-data">
+                <span class="dia">{{ f.data | date: 'dd' }}</span>
+                <span class="mes">{{ f.data | date: 'MMM' }}</span>
+              </div>
+              <div class="card-corpo">
+                <div class="card-aluno">{{ f.aluno?.nome ?? '—' }}</div>
+                <p class="card-motivo">{{ f.motivo }}</p>
+              </div>
+              <div class="card-acoes">
+                <button mat-icon-button matTooltip="Editar" (click)="editar(f)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button matTooltip="Excluir" (click)="excluir(f)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  } @else if (carregou() && busca()) {
+    <div class="vazio">
+      <mat-icon>search_off</mat-icon>
+      <p>Nenhuma justificativa encontrada para "{{ busca() }}".</p>
+    </div>
   } @else if (carregou()) {
     <div class="vazio">
       <mat-icon>event_busy</mat-icon>

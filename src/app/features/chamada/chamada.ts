@@ -6,10 +6,7 @@ import { MatSelectModule } from '@angular/material/select';
 
 import { TurmasService } from '../../core/services/turmas.service';
 import { Turma } from '../../core/models/turma.model';
-import {
-  lerPreferencia,
-  salvarPreferencia,
-} from '../../core/util/preferencias';
+import { PreferenciasService } from '../../core/util/preferencias';
 import { ChamadaDia } from './chamada-dia/chamada-dia';
 import { ChamadaMensal } from './chamada-mensal/chamada-mensal';
 import { Faltas } from './faltas/faltas';
@@ -73,11 +70,12 @@ import { Faltas } from './faltas/faltas';
 })
 export class Chamada {
   private readonly turmasService = inject(TurmasService);
+  private readonly prefs = inject(PreferenciasService);
 
   readonly turmas = signal<Turma[]>([]);
 
   /** Turma selecionada, compartilhada por todas as abas de chamada. */
-  turmaId = lerPreferencia<string>('chamada.turmaId') ?? '';
+  turmaId = this.prefs.ler<string>('chamada.turmaId') ?? '';
 
   constructor() {
     this.turmasService.listar().subscribe((l) => {
@@ -87,11 +85,11 @@ export class Chamada {
       } else if (this.turmaId && !l.some((t) => t.id === this.turmaId)) {
         this.turmaId = '';
       }
-      salvarPreferencia('chamada.turmaId', this.turmaId);
+      this.prefs.salvar('chamada.turmaId', this.turmaId);
     });
   }
 
   onTurmaChange(): void {
-    salvarPreferencia('chamada.turmaId', this.turmaId);
+    this.prefs.salvar('chamada.turmaId', this.turmaId);
   }
 }

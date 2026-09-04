@@ -13,10 +13,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { TurmasService } from '../../core/services/turmas.service';
 import { ConteudoService } from '../../core/services/conteudo.service';
 import { iniciarCarregamento } from '../../core/util/carregamento';
-import {
-  lerPreferencia,
-  salvarPreferencia,
-} from '../../core/util/preferencias';
+import { PreferenciasService } from '../../core/util/preferencias';
 import { Turma } from '../../core/models/turma.model';
 import { RegistroConteudo } from '../../core/models/conteudo.model';
 import {
@@ -49,6 +46,7 @@ export class Conteudo {
   private readonly service = inject(ConteudoService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
+  private readonly prefs = inject(PreferenciasService);
 
   readonly turmas = signal<Turma[]>([]);
   readonly registros = signal<RegistroConteudo[]>([]);
@@ -56,7 +54,7 @@ export class Conteudo {
   readonly carregou = signal(false);
   readonly erro = signal<string | null>(null);
 
-  filtroTurma = lerPreferencia<string>('conteudo.filtroTurma') ?? '';
+  filtroTurma = this.prefs.ler<string>('conteudo.filtroTurma') ?? '';
 
   constructor() {
     this.turmasService.listar().subscribe((l) => {
@@ -71,7 +69,7 @@ export class Conteudo {
 
   carregar(): void {
     this.erro.set(null);
-    salvarPreferencia('conteudo.filtroTurma', this.filtroTurma);
+    this.prefs.salvar('conteudo.filtroTurma', this.filtroTurma);
     const fim = iniciarCarregamento(this.carregando);
     this.service.listar({ turmaId: this.filtroTurma || undefined }).subscribe({
       next: (l) => {

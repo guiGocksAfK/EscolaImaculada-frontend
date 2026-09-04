@@ -13,10 +13,7 @@ import { TurmasService } from '../../core/services/turmas.service';
 import { AlunosService } from '../../core/services/alunos.service';
 import { AvaliacoesService } from '../../core/services/avaliacoes.service';
 import { iniciarCarregamento } from '../../core/util/carregamento';
-import {
-  lerPreferencia,
-  salvarPreferencia,
-} from '../../core/util/preferencias';
+import { PreferenciasService } from '../../core/util/preferencias';
 import { Turma } from '../../core/models/turma.model';
 import { Aluno } from '../../core/models/aluno.model';
 import { Avaliacao } from '../../core/models/avaliacao.model';
@@ -50,6 +47,7 @@ export class Avaliacoes {
   private readonly service = inject(AvaliacoesService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
+  private readonly prefs = inject(PreferenciasService);
 
   readonly turmas = signal<Turma[]>([]);
   readonly alunos = signal<Aluno[]>([]);
@@ -58,8 +56,8 @@ export class Avaliacoes {
   readonly carregou = signal(false);
   readonly erro = signal<string | null>(null);
 
-  filtroTurma = lerPreferencia<string>('avaliacoes.filtroTurma') ?? '';
-  filtroAluno = lerPreferencia<string>('avaliacoes.filtroAluno') ?? '';
+  filtroTurma = this.prefs.ler<string>('avaliacoes.filtroTurma') ?? '';
+  filtroAluno = this.prefs.ler<string>('avaliacoes.filtroAluno') ?? '';
 
   constructor() {
     this.turmasService.listar().subscribe((l) => {
@@ -87,8 +85,8 @@ export class Avaliacoes {
 
   carregar(): void {
     this.erro.set(null);
-    salvarPreferencia('avaliacoes.filtroTurma', this.filtroTurma);
-    salvarPreferencia('avaliacoes.filtroAluno', this.filtroAluno);
+    this.prefs.salvar('avaliacoes.filtroTurma', this.filtroTurma);
+    this.prefs.salvar('avaliacoes.filtroAluno', this.filtroAluno);
     const fim = iniciarCarregamento(this.carregando);
     this.service
       .listar({
