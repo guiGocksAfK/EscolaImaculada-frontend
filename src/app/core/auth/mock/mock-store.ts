@@ -4,6 +4,7 @@ import { RegistroChamada } from '../../models/chamada.model';
 import { FaltaJustificada } from '../../models/falta-justificada.model';
 import { RegistroConteudo } from '../../models/conteudo.model';
 import { Avaliacao } from '../../models/avaliacao.model';
+import { Escola } from '../../models/escola.model';
 import { MOCK_ESCOLA_ID, MOCK_USERS, MockUser } from './mock-users';
 
 /**
@@ -202,7 +203,19 @@ function seedAvaliacoes(): Avaliacao[] {
   ];
 }
 
+function seedEscola(): Escola {
+  return {
+    id: MOCK_ESCOLA_ID,
+    nome: 'Escola Imaculada',
+    endereco: 'Rua Padre Ladislau Kula, 123 - Santa Felicidade, Curitiba - PR',
+  };
+}
+
 export const mockStore = {
+  escola: {
+    get: (): Escola => load('escola', () => [seedEscola()])[0],
+    set: (dados: Escola): void => save('escola', [dados]),
+  },
   usuarios: {
     all: (): MockUser[] => load('usuarios', () => MOCK_USERS.map((u) => ({ ...u }))),
     replace: (dados: MockUser[]): void => save('usuarios', dados),

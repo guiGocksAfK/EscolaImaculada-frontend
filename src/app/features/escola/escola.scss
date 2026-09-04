@@ -1,0 +1,31 @@
+h1 {
+  margin: 0 0 0.15rem;
+}
+
+.sub {
+  margin: 0 0 1.25rem;
+  color: var(--mat-sys-on-surface-variant, #6b7280);
+  font-size: 0.9rem;
+}
+
+.erro {
+  color: var(--mat-sys-error, #b3261e);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 520px;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+.acoes {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}

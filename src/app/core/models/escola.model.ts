@@ -5,3 +5,6 @@ export interface Escola {
 }
 
 export type EscolaCreate = Omit<Escola, 'id'>;
+
+/** Payload de edição dos dados da escola (feito pela diretora). */
+export type EscolaUpdate = EscolaCreate;
