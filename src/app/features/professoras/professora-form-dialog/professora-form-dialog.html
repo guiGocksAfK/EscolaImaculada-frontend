@@ -11,21 +11,19 @@
     </mat-form-field>
 
     <mat-form-field>
-      <mat-label>CPF (usado no login)</mat-label>
+      <mat-label>CPF</mat-label>
       <input matInput formControlName="cpf" inputmode="numeric" maxlength="11" />
+      <mat-hint>Usado por ela para entrar no sistema.</mat-hint>
       @if (form.controls.cpf.touched && form.controls.cpf.invalid) {
         <mat-error>Use 11 dígitos, só números.</mat-error>
       }
     </mat-form-field>
 
     <mat-form-field>
-      <mat-label>Data de nascimento</mat-label>
+      <mat-label>Data de nascimento (opcional)</mat-label>
       <input matInput [matDatepicker]="dp" formControlName="dataNascimento" />
       <mat-datepicker-toggle matIconSuffix [for]="dp" />
       <mat-datepicker #dp />
-      @if (form.controls.dataNascimento.touched && form.controls.dataNascimento.invalid) {
-        <mat-error>Informe a data.</mat-error>
-      }
     </mat-form-field>
 
     <mat-form-field>

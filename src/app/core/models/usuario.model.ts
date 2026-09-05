@@ -14,15 +14,15 @@ export interface ProfessoraDetalhe {
   id: string;
   nome: string;
   cpf: string;
-  dataNascimento: string;
+  dataNascimento?: string;
   totalTurmas: number;
 }
 
-/** Cadastro de professora feito pela diretora. */
+/** Cadastro de professora feito pela diretora — data de nascimento é opcional. */
 export interface ProfessoraCreate {
   nome: string;
   cpf: string;
-  dataNascimento: string;
+  dataNascimento?: string;
   senha: string;
 }
 
@@ -30,7 +30,7 @@ export interface ProfessoraCreate {
 export interface ProfessoraUpdate {
   nome: string;
   cpf: string;
-  dataNascimento: string;
+  dataNascimento?: string;
   senha?: string;
 }
 
