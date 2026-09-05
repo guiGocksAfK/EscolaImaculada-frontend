@@ -39,7 +39,10 @@ export const appConfig: ApplicationConfig = {
     { provide: MAT_DATE_LOCALE, useValue: 'pt-BR' },
     {
       provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
-      useValue: { appearance: 'outline' },
+      // floatLabel 'always': sem isso, o rótulo de um campo vazio fica
+      // centralizado dentro da caixa (parecendo texto já digitado) em vez
+      // de subir pro topo — confunde muito em campos maiores, tipo textarea.
+      useValue: { appearance: 'outline', floatLabel: 'always' },
     },
   ],
 };

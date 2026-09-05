@@ -9,18 +9,75 @@
   </button>
 </header>
 
-<mat-form-field class="filtro">
-  <mat-label>Turma</mat-label>
-  <mat-select [(ngModel)]="filtroTurma" (ngModelChange)="carregar()">
-    <mat-option value="">Todas</mat-option>
-    @for (t of turmas(); track t.id) {
-      <mat-option [value]="t.id">{{ t.nome }}</mat-option>
+<div class="filtros">
+  <mat-form-field class="filtro-turma">
+    <mat-label>Turma</mat-label>
+    <mat-select [(ngModel)]="filtroTurma" (ngModelChange)="carregar()">
+      <mat-option value="">Todas</mat-option>
+      @for (t of turmas(); track t.id) {
+        <mat-option [value]="t.id">{{ t.nome }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field class="busca">
+    <mat-icon matPrefix>search</mat-icon>
+    <mat-label>Buscar no conteúdo</mat-label>
+    <input
+      matInput
+      placeholder="Turma ou texto do conteúdo…"
+      [ngModel]="busca()"
+      (ngModelChange)="busca.set($event)"
+    />
+    @if (busca()) {
+      <button
+        matSuffix
+        mat-icon-button
+        matTooltip="Limpar busca"
+        (click)="busca.set('')"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
     }
-  </mat-select>
-</mat-form-field>
+  </mat-form-field>
+</div>
 
 @if (carregando()) {
   <mat-progress-bar mode="indeterminate" />
+}
+
+@if (!filtroTurma) {
+  <p class="dica-semana">Escolha uma turma acima pra ver o guia da semana.</p>
+} @else if (semanaAtual(); as dias) {
+  <div class="semana-guia">
+    <span class="semana-titulo">Esta semana</span>
+    <div class="semana-dias">
+      @for (dia of dias; track dia.iso) {
+        <div class="dia-chip" [class.hoje]="dia.hoje">
+          <span class="dia-label">{{ dia.label }}</span>
+          @if (dia.registro) {
+            <button
+              mat-icon-button
+              class="dia-ok"
+              matTooltip="Já lançado — clique pra editar"
+              (click)="editar(dia.registro)"
+            >
+              <mat-icon>check_circle</mat-icon>
+            </button>
+          } @else {
+            <button
+              mat-icon-button
+              class="dia-pendente"
+              matTooltip="Lançar conteúdo deste dia"
+              (click)="novo(dia.iso)"
+            >
+              <mat-icon>add_circle_outline</mat-icon>
+            </button>
+          }
+        </div>
+      }
+    </div>
+  </div>
 }
 
 @if (erro()) {
@@ -28,28 +85,57 @@
 }
 
 @if (!erro()) {
-  @if (registros().length > 0) {
-    <ul class="lista">
-      @for (r of registros(); track r.id; let i = $index) {
-        <li
-          animate.enter="item-entra"
-          [style.animation-delay.ms]="(i < 12 ? i : 12) * 30"
-        >
-          <div class="meta">
-            <span class="data">{{ r.data | date: 'dd/MM/yyyy' }}</span>
-            <span class="turma">{{ r.turma?.nome ?? '—' }}</span>
-            <span class="spacer"></span>
-            <button mat-icon-button matTooltip="Editar" (click)="editar(r)">
-              <mat-icon>edit</mat-icon>
-            </button>
-            <button mat-icon-button matTooltip="Excluir" (click)="excluir(r)">
-              <mat-icon>delete</mat-icon>
-            </button>
+  @if (grupos().length > 0) {
+    @for (mes of grupos(); track mes.chave) {
+      <section class="mes">
+        <h2 class="mes-titulo">{{ mes.rotulo }}</h2>
+        @for (semana of mes.semanas; track semana.chave) {
+          <div class="semana">
+            <h3 class="semana-subtitulo">{{ semana.rotulo }}</h3>
+            <ul class="lista">
+              @for (r of semana.itens; track r.id; let i = $index) {
+                <li
+                  class="card"
+                  animate.enter="item-entra"
+                  [style.animation-delay.ms]="(i < 12 ? i : 12) * 20"
+                >
+                  <div class="card-topo">
+                    <span class="card-data">{{ r.data | date: 'dd/MM' }}</span>
+                    <span class="card-turma">{{ r.turma?.nome ?? '—' }}</span>
+                    <span class="spacer"></span>
+                    <button mat-icon-button matTooltip="Editar" (click)="editar(r)">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button matTooltip="Excluir" (click)="excluir(r)">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+
+                  @if (parse(r.conteudo); as campos) {
+                    @if (campos.disciplina) {
+                      <p class="card-disciplina">{{ campos.disciplina }}</p>
+                    }
+                    <dl class="card-campos">
+                      @for (linha of linhas(campos); track linha.rotulo) {
+                        <div class="campo">
+                          <dt>{{ linha.rotulo }}</dt>
+                          <dd>{{ linha.texto }}</dd>
+                        </div>
+                      }
+                    </dl>
+                  }
+                </li>
+              }
+            </ul>
           </div>
-          <p class="texto">{{ r.conteudo }}</p>
-        </li>
-      }
-    </ul>
+        }
+      </section>
+    }
+  } @else if (carregou() && busca()) {
+    <div class="vazio">
+      <mat-icon>search_off</mat-icon>
+      <p>Nenhum registro encontrado para "{{ busca() }}".</p>
+    </div>
   } @else if (carregou()) {
     <div class="vazio">
       <mat-icon>menu_book</mat-icon>

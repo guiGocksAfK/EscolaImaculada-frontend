@@ -1,9 +1,10 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -14,6 +15,7 @@ import { TurmasService } from '../../core/services/turmas.service';
 import { ConteudoService } from '../../core/services/conteudo.service';
 import { iniciarCarregamento } from '../../core/util/carregamento';
 import { PreferenciasService } from '../../core/util/preferencias';
+import { fromISODate, toISODate } from '../../core/date/iso-date';
 import { Turma } from '../../core/models/turma.model';
 import { RegistroConteudo } from '../../core/models/conteudo.model';
 import {
@@ -25,6 +27,56 @@ import {
   ConteudoFormDialog,
   ConteudoFormResult,
 } from './conteudo-form-dialog/conteudo-form-dialog';
+import { linhasParaExibicao, parseConteudo } from './campos-conteudo';
+
+const NOMES_MES = [
+  'Janeiro',
+  'Fevereiro',
+  'Março',
+  'Abril',
+  'Maio',
+  'Junho',
+  'Julho',
+  'Agosto',
+  'Setembro',
+  'Outubro',
+  'Novembro',
+  'Dezembro',
+];
+
+const DIAS_SEMANA = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'];
+
+interface GrupoSemana {
+  chave: string;
+  rotulo: string;
+  itens: RegistroConteudo[];
+}
+
+interface GrupoMes {
+  chave: string;
+  rotulo: string;
+  semanas: GrupoSemana[];
+}
+
+interface DiaDaSemana {
+  iso: string;
+  label: string;
+  hoje: boolean;
+  registro: RegistroConteudo | null;
+}
+
+function segundaDaSemana(d: Date): Date {
+  const data = new Date(d);
+  const dia = data.getDay(); // 0 = domingo
+  const diff = dia === 0 ? -6 : 1 - dia;
+  data.setDate(data.getDate() + diff);
+  data.setHours(0, 0, 0, 0);
+  return data;
+}
+
+function formatarDiaMes(d: Date): string {
+  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
 
 @Component({
   selector: 'app-conteudo',
@@ -34,6 +86,7 @@ import {
     MatButtonModule,
     MatIconModule,
     MatFormFieldModule,
+    MatInputModule,
     MatSelectModule,
     MatProgressBarModule,
     MatTooltipModule,
@@ -53,8 +106,71 @@ export class Conteudo {
   readonly carregando = signal(false);
   readonly carregou = signal(false);
   readonly erro = signal<string | null>(null);
+  readonly busca = signal('');
+
+  readonly linhas = linhasParaExibicao;
+  readonly parse = parseConteudo;
 
   filtroTurma = this.prefs.ler<string>('conteudo.filtroTurma') ?? '';
+
+  /** Guia da semana atual — só faz sentido com uma turma específica selecionada. */
+  readonly semanaAtual = computed<DiaDaSemana[] | null>(() => {
+    if (!this.filtroTurma) return null;
+    const hojeIso = toISODate(new Date());
+    const seg = segundaDaSemana(new Date());
+    const dias: DiaDaSemana[] = [];
+    for (let i = 0; i < 5; i++) {
+      const d = new Date(seg);
+      d.setDate(d.getDate() + i);
+      const iso = toISODate(d);
+      dias.push({
+        iso,
+        label: `${DIAS_SEMANA[i]} ${formatarDiaMes(d)}`,
+        hoje: iso === hojeIso,
+        registro: this.registros().find((r) => r.data === iso) ?? null,
+      });
+    }
+    return dias;
+  });
+
+  private readonly registrosFiltrados = computed(() => {
+    const termo = this.busca().trim().toLowerCase();
+    if (!termo) return this.registros();
+    return this.registros().filter((r) => {
+      const turmaNome = r.turma?.nome?.toLowerCase() ?? '';
+      return (
+        turmaNome.includes(termo) || r.conteudo.toLowerCase().includes(termo)
+      );
+    });
+  });
+
+  readonly grupos = computed<GrupoMes[]>(() => {
+    const ordenados = [...this.registrosFiltrados()].sort((a, b) =>
+      b.data.localeCompare(a.data),
+    );
+    const meses = new Map<string, Map<string, RegistroConteudo[]>>();
+    for (const r of ordenados) {
+      const mesChave = r.data.slice(0, 7); // YYYY-MM
+      const semanaChave = toISODate(segundaDaSemana(fromISODate(r.data)!));
+      let semanas = meses.get(mesChave);
+      if (!semanas) {
+        semanas = new Map();
+        meses.set(mesChave, semanas);
+      }
+      const itens = semanas.get(semanaChave);
+      if (itens) itens.push(r);
+      else semanas.set(semanaChave, [r]);
+    }
+    return Array.from(meses.entries()).map(([mesChave, semanas]) => ({
+      chave: mesChave,
+      rotulo: this.rotuloMes(mesChave),
+      semanas: Array.from(semanas.entries()).map(([semanaChave, itens]) => ({
+        chave: semanaChave,
+        rotulo: this.rotuloSemana(semanaChave),
+        itens,
+      })),
+    }));
+  });
 
   constructor() {
     this.turmasService.listar().subscribe((l) => {
@@ -85,8 +201,8 @@ export class Conteudo {
     });
   }
 
-  novo(): void {
-    this.abrirForm();
+  novo(dataInicial?: string): void {
+    this.abrirForm(undefined, dataInicial);
   }
 
   editar(r: RegistroConteudo): void {
@@ -118,10 +234,23 @@ export class Conteudo {
       });
   }
 
-  private abrirForm(registro?: RegistroConteudo): void {
+  private rotuloMes(chave: string): string {
+    const [ano, mes] = chave.split('-').map(Number);
+    return `${NOMES_MES[mes - 1]} de ${ano}`;
+  }
+
+  private rotuloSemana(segundaIso: string): string {
+    const seg = fromISODate(segundaIso)!;
+    const sex = new Date(seg);
+    sex.setDate(sex.getDate() + 4);
+    return `Semana de ${formatarDiaMes(seg)} a ${formatarDiaMes(sex)}`;
+  }
+
+  private abrirForm(registro?: RegistroConteudo, dataInicial?: string): void {
     const data: ConteudoFormData = {
       registro,
       turmaIdInicial: this.filtroTurma,
+      dataInicial,
     };
     this.dialog
       .open(ConteudoFormDialog, { data })

@@ -26,3 +26,20 @@ mat-form-field {
     gap: 0;
   }
 }
+
+.secao-titulo {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--mat-sys-on-surface-variant, #6b7280);
+}
+
+mat-chip-listbox {
+  margin: 0.4rem 0 0.6rem;
+}
+
+.erro {
+  margin: 0;
+  color: #b3261e;
+  font-size: 0.85rem;
+}
