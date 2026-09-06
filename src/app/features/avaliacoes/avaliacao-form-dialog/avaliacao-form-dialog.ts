@@ -33,7 +33,8 @@ export type AvaliacaoFormResult = AvaliacaoCreate;
 
 function referenciaPadrao(): string {
   const hoje = new Date();
-  const semestre = hoje.getMonth() < 6 ? '1º' : '2º';
+  // 1º semestre = fev–jul; 2º = ago–dez (mesma definição do backend/relatórios).
+  const semestre = hoje.getMonth() + 1 <= 7 ? '1º' : '2º';
   return `${semestre} semestre ${hoje.getFullYear()}`;
 }
 

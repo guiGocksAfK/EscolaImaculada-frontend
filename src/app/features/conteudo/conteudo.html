@@ -111,7 +111,7 @@
                     </button>
                   </div>
 
-                  @if (parse(r.conteudo); as campos) {
+                  @if (campos(r); as campos) {
                     @if (campos.disciplina) {
                       <p class="card-disciplina">{{ campos.disciplina }}</p>
                     }

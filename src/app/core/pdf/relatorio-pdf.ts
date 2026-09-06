@@ -2,10 +2,6 @@ import type { jsPDF } from 'jspdf';
 
 import { RelatorioResumo } from '../models/relatorio.model';
 import { ChamadaMensal } from '../models/chamada.model';
-import { Aluno } from '../models/aluno.model';
-import { RegistroConteudo } from '../models/conteudo.model';
-import { FaltaJustificada } from '../models/falta-justificada.model';
-import { Avaliacao } from '../models/avaliacao.model';
 
 const FONTE = 'Roboto';
 const AZUL: [number, number, number] = [21, 101, 192];
@@ -275,25 +271,32 @@ function formatarData(iso: string): string {
   return `${dia}/${mes}/${ano}`;
 }
 
-function situacaoAluno(a: Aluno): string {
+function situacaoAluno(a: { status: string }): string {
   if (a.status === 'TRANSFERIDO') return 'Transferido';
   if (a.status === 'DESISTENTE') return 'Desistente';
   return '';
 }
 
+/** Payload já montado e filtrado pelo backend (`/relatorios/registro-semestral`). */
 export interface RegistroSemestralDados {
   turmaNome: string;
   semestre: 1 | 2;
   ano: number;
   /** Um item por mês do semestre — meses sem chamada lançada (dias vazio) são ignorados na grade. */
   meses: ChamadaMensal[];
-  alunos: Aluno[];
-  /** Registros de conteúdo já filtrados para o período, ordenados por data. */
-  conteudos: RegistroConteudo[];
-  /** Faltas justificadas já filtradas para o período, ordenados por data. */
-  justificadas: FaltaJustificada[];
-  /** Avaliações já filtradas para o período. */
-  avaliacoes: Avaliacao[];
+  alunos: Array<{ id: string; nome: string; status: string }>;
+  conteudos: Array<{ data: string; conteudo: string }>;
+  justificadas: Array<{
+    alunoId: string;
+    data: string;
+    motivo: string;
+    aluno?: { nome?: string } | null;
+  }>;
+  avaliacoes: Array<{
+    referencia: string;
+    texto: string;
+    aluno?: { nome?: string } | null;
+  }>;
   responsavelNome: string;
 }
 

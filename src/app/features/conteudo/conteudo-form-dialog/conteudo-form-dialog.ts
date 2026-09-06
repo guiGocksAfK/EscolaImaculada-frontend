@@ -29,10 +29,9 @@ import { fromISODate, toISODate } from '../../../core/date/iso-date';
 import {
   CAMPOS_EXPERIENCIA,
   ChaveCampoExperiencia,
+  camposDoRegistro,
   camposPreenchidos,
   camposVazios,
-  parseConteudo,
-  serializarConteudo,
 } from '../campos-conteudo';
 
 export interface ConteudoFormData {
@@ -117,15 +116,16 @@ export class ConteudoFormDialog implements OnInit {
 
     if (this.data.registro) {
       const r = this.data.registro;
-      const camposDoRegistro = parseConteudo(r.conteudo);
+      const campos = camposDoRegistro(r);
       this.form.patchValue({
         turmaId: r.turmaId,
         data: fromISODate(r.data),
-        ...camposDoRegistro,
+        ...campos,
       });
       this.selecionados.set(
-        CAMPOS_EXPERIENCIA.filter((c) => camposDoRegistro[c.chave].trim())
-          .map((c) => c.chave),
+        CAMPOS_EXPERIENCIA.filter((c) => campos[c.chave].trim()).map(
+          (c) => c.chave,
+        ),
       );
     }
 
@@ -160,10 +160,17 @@ export class ConteudoFormDialog implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
+    const soPreenchidos = (t: string) => t.trim() || undefined;
     this.ref.close({
       turmaId: v.turmaId,
       data: toISODate(v.data!),
-      conteudo: serializarConteudo(campos),
+      disciplina: soPreenchidos(campos.disciplina),
+      euOutroNos: soPreenchidos(campos.euOutroNos),
+      corpoGestos: soPreenchidos(campos.corpoGestos),
+      tracosSons: soPreenchidos(campos.tracosSons),
+      escutaFala: soPreenchidos(campos.escutaFala),
+      espacoTempo: soPreenchidos(campos.espacoTempo),
+      outras: soPreenchidos(campos.outras),
     });
   }
 }

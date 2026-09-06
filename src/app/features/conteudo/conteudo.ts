@@ -27,7 +27,7 @@ import {
   ConteudoFormDialog,
   ConteudoFormResult,
 } from './conteudo-form-dialog/conteudo-form-dialog';
-import { linhasParaExibicao, parseConteudo } from './campos-conteudo';
+import { camposDoRegistro, linhasParaExibicao } from './campos-conteudo';
 
 const NOMES_MES = [
   'Janeiro',
@@ -109,7 +109,7 @@ export class Conteudo {
   readonly busca = signal('');
 
   readonly linhas = linhasParaExibicao;
-  readonly parse = parseConteudo;
+  readonly campos = camposDoRegistro;
 
   filtroTurma = this.prefs.ler<string>('conteudo.filtroTurma') ?? '';
 
