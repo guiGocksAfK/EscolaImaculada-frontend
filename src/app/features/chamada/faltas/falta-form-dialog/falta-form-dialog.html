@@ -13,7 +13,10 @@
 
     <mat-form-field>
       <mat-label>Aluno</mat-label>
-      <mat-select formControlName="alunoId" [disabled]="alunos().length === 0">
+      <mat-select
+        formControlName="alunoId"
+        [disabled]="alunos().length === 0 || carregandoAlunos()"
+      >
         @for (a of alunos(); track a.id) {
           <mat-option [value]="a.id">{{ a.nome }}</mat-option>
         }
@@ -22,6 +25,14 @@
         <mat-error>Selecione o aluno.</mat-error>
       }
     </mat-form-field>
+    @if (
+      !carregandoAlunos() &&
+      alunos().length === 0 &&
+      form.value.turmaId &&
+      form.value.data
+    ) {
+      <p class="dica">Nenhum aluno com falta lançada nesta data.</p>
+    }
 
     <mat-form-field>
       <mat-label>Data da falta</mat-label>

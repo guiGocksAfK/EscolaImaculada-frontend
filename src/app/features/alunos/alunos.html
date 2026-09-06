@@ -3,10 +3,12 @@
     <h1>Alunos</h1>
     <p>Cadastro dos alunos e situação de matrícula.</p>
   </div>
-  <button mat-flat-button color="primary" (click)="novo()">
-    <mat-icon>add</mat-icon>
-    Novo aluno
-  </button>
+  @if (podeGerenciar()) {
+    <button mat-flat-button color="primary" (click)="novo()">
+      <mat-icon>add</mat-icon>
+      Novo aluno
+    </button>
+  }
 </header>
 
 <div class="filtros">
@@ -90,7 +92,7 @@
                 Marcar como {{ statusLabel[s].toLowerCase() }}
               </button>
             }
-            @if (podeExcluir()) {
+            @if (podeGerenciar()) {
               <button mat-menu-item class="perigo" (click)="excluir(a)">
                 Excluir cadastro
               </button>
@@ -99,10 +101,10 @@
         </td>
       </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="colunas"></tr>
+      <tr mat-header-row *matHeaderRowDef="colunas()"></tr>
       <tr
         mat-row
-        *matRowDef="let row; columns: colunas; let i = index"
+        *matRowDef="let row; columns: colunas(); let i = index"
         animate.enter="item-entra"
         [style.animation-delay.ms]="(i < 12 ? i : 12) * 25"
       ></tr>

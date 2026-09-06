@@ -16,6 +16,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { AlunosService } from '../../core/services/alunos.service';
 import { TurmasService } from '../../core/services/turmas.service';
 import { iniciarCarregamento } from '../../core/util/carregamento';
+import { PreferenciasService } from '../../core/util/preferencias';
 import { Turma } from '../../core/models/turma.model';
 import {
   Aluno,
@@ -56,10 +57,11 @@ export class Alunos {
   private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
+  private readonly prefs = inject(PreferenciasService);
 
   readonly statusOpcoes = STATUS_ALUNO;
   readonly statusLabel = STATUS_ALUNO_LABEL;
-  readonly colunas = ['nome', 'turma', 'nascimento', 'status', 'acoes'];
+  private readonly colunasBase = ['nome', 'turma', 'nascimento', 'status'];
 
   readonly turmas = signal<Turma[]>([]);
   readonly alunos = signal<Aluno[]>([]);
@@ -67,18 +69,30 @@ export class Alunos {
   readonly carregou = signal(false);
   readonly erro = signal<string | null>(null);
 
-  filtroTurma = '';
-  filtroStatus: StatusAluno | '' = 'ATIVO';
+  filtroTurma = this.prefs.ler<string>('alunos.filtroTurma') ?? '';
+  filtroStatus: StatusAluno | '' =
+    this.prefs.ler<StatusAluno | ''>('alunos.filtroStatus') ?? 'ATIVO';
 
-  readonly podeExcluir = computed(() => this.auth.hasPapel('DIRETORA'));
+  readonly podeGerenciar = computed(() => this.auth.hasPapel('DIRETORA'));
+  readonly colunas = computed(() =>
+    this.podeGerenciar() ? [...this.colunasBase, 'acoes'] : this.colunasBase,
+  );
 
   constructor() {
-    this.turmasService.listar().subscribe((l) => this.turmas.set(l));
+    this.turmasService.listar().subscribe((l) => {
+      this.turmas.set(l);
+      if (this.filtroTurma && !l.some((t) => t.id === this.filtroTurma)) {
+        this.filtroTurma = '';
+        this.carregar();
+      }
+    });
     this.carregar();
   }
 
   carregar(): void {
     this.erro.set(null);
+    this.prefs.salvar('alunos.filtroTurma', this.filtroTurma);
+    this.prefs.salvar('alunos.filtroStatus', this.filtroStatus);
     const fim = iniciarCarregamento(this.carregando);
     this.alunosService
       .listar({
@@ -118,14 +132,17 @@ export class Alunos {
   }
 
   novo(): void {
+    if (!this.podeGerenciar()) return;
     this.abrirForm();
   }
 
   editar(aluno: Aluno): void {
+    if (!this.podeGerenciar()) return;
     this.abrirForm(aluno);
   }
 
   mudarStatus(aluno: Aluno, status: StatusAluno): void {
+    if (!this.podeGerenciar()) return;
     if (status === aluno.status) return;
 
     const sair = status !== 'ATIVO';
@@ -162,6 +179,7 @@ export class Alunos {
   }
 
   excluir(aluno: Aluno): void {
+    if (!this.podeGerenciar()) return;
     const dados: ConfirmDialogData = {
       titulo: 'Excluir aluno',
       mensagem: `Excluir "${aluno.nome}" apaga o cadastro e o histórico. Para tirar da chamada sem perder o histórico, use "Transferido". Excluir mesmo assim?`,

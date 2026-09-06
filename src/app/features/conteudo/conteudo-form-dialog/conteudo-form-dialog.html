@@ -3,17 +3,24 @@
 <mat-dialog-content>
   <form class="form" [formGroup]="form" (ngSubmit)="salvar()">
     <div class="linha">
-      <mat-form-field>
-        <mat-label>Turma</mat-label>
-        <mat-select formControlName="turmaId">
-          @for (t of turmas(); track t.id) {
-            <mat-option [value]="t.id">{{ t.nome }}</mat-option>
+      @if (turmaFixa) {
+        <mat-form-field>
+          <mat-label>Turma</mat-label>
+          <input matInput [value]="turmaNomeFixa" readonly />
+        </mat-form-field>
+      } @else {
+        <mat-form-field>
+          <mat-label>Turma</mat-label>
+          <mat-select formControlName="turmaId">
+            @for (t of turmas(); track t.id) {
+              <mat-option [value]="t.id">{{ t.nome }}</mat-option>
+            }
+          </mat-select>
+          @if (form.controls.turmaId.touched && form.controls.turmaId.invalid) {
+            <mat-error>Selecione a turma.</mat-error>
           }
-        </mat-select>
-        @if (form.controls.turmaId.touched && form.controls.turmaId.invalid) {
-          <mat-error>Selecione a turma.</mat-error>
-        }
-      </mat-form-field>
+        </mat-form-field>
+      }
 
       <mat-form-field>
         <mat-label>Data</mat-label>
@@ -27,17 +34,49 @@
     </div>
 
     <mat-form-field>
-      <mat-label>Conteúdo trabalhado</mat-label>
+      <mat-label>Disciplina / área (opcional)</mat-label>
+      <input
+        matInput
+        formControlName="disciplina"
+        placeholder="Artes, Português, Matemática, Ensino Religioso…"
+      />
+    </mat-form-field>
+
+    <p class="secao-titulo">Campos de experiência trabalhados nesse dia</p>
+
+    <mat-chip-listbox multiple [value]="selecionados()" (change)="onSelecaoChange($event)">
+      @for (campo of campos; track campo.chave) {
+        <mat-chip-option [value]="campo.chave">{{ campo.rotulo }}</mat-chip-option>
+      }
+    </mat-chip-listbox>
+
+    @for (campo of campos; track campo.chave) {
+      @if (selecionados().includes(campo.chave)) {
+        <mat-form-field>
+          <mat-label>{{ campo.rotulo }}</mat-label>
+          <textarea
+            matInput
+            [formControlName]="campo.chave"
+            rows="2"
+            [placeholder]="campo.placeholder"
+          ></textarea>
+        </mat-form-field>
+      }
+    }
+
+    <mat-form-field>
+      <mat-label>Outras observações (opcional)</mat-label>
       <textarea
         matInput
-        formControlName="conteudo"
-        rows="6"
-        placeholder="Atividades, temas, histórias, brincadeiras dirigidas…"
+        formControlName="outras"
+        rows="2"
+        placeholder="Qualquer coisa que não se encaixe nos campos acima…"
       ></textarea>
-      @if (form.controls.conteudo.touched && form.controls.conteudo.invalid) {
-        <mat-error>Descreva o conteúdo da aula.</mat-error>
-      }
     </mat-form-field>
+
+    @if (form.touched && form.hasError('vazio')) {
+      <p class="erro">Preencha pelo menos um campo de conteúdo.</p>
+    }
   </form>
 </mat-dialog-content>
 

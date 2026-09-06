@@ -1,0 +1,57 @@
+<p class="dica-topo">
+  Gera um único PDF com frequência mês a mês, conteúdo dado, faltas
+  justificadas e um resumo final do semestre — no formato de um diário de
+  classe completo.
+</p>
+
+<div class="filtros">
+  <mat-form-field>
+    <mat-label>Turma</mat-label>
+    <mat-select [(ngModel)]="turmaId">
+      @for (t of turmas(); track t.id) {
+        <mat-option [value]="t.id">{{ t.nome }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field>
+    <mat-label>Semestre</mat-label>
+    <mat-select [(ngModel)]="semestre">
+      <mat-option [value]="1">1º semestre (fev–jul)</mat-option>
+      <mat-option [value]="2">2º semestre (ago–dez)</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field>
+    <mat-label>Ano</mat-label>
+    <mat-select [(ngModel)]="ano">
+      @for (a of anos; track a) {
+        <mat-option [value]="a">{{ a }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="gerarPdf()"
+    [disabled]="!turmaId || carregando()"
+  >
+    <mat-icon>picture_as_pdf</mat-icon>
+    {{ carregando() ? 'Gerando…' : 'Gerar PDF' }}
+  </button>
+</div>
+
+@if (carregando()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (!turmaId) {
+  <p class="dica">Escolha a turma para gerar o registro do semestre.</p>
+} @else if (gerado(); as g) {
+  <p class="resultado">
+    PDF gerado: {{ g.meses }} mês(es) de frequência lançada,
+    {{ g.conteudos }} registro(s) de conteúdo, {{ g.justificadas }} falta(s)
+    justificada(s), {{ g.alunos }} aluno(s).
+  </p>
+}

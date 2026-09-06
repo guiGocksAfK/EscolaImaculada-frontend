@@ -10,3 +10,9 @@
 mat-form-field {
   width: 100%;
 }
+
+.dica {
+  margin: -0.5rem 0 0.5rem;
+  font-size: 0.85rem;
+  color: var(--mat-sys-on-surface-variant, rgba(0, 0, 0, 0.6));
+}

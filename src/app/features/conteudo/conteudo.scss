@@ -1,18 +1,170 @@
-.filtro {
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.head p {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant, #6b7280);
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin: 0.75rem 0 0.5rem;
+}
+
+.filtro-turma {
   width: 220px;
 }
 
-.meta {
+.busca {
+  width: 320px;
+  max-width: 100%;
+}
+
+.erro {
+  color: #b3261e;
+}
+
+.vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 3rem 1rem;
+  color: var(--mat-sys-on-surface-variant, #6b7280);
+}
+
+.vazio mat-icon {
+  font-size: 2.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  opacity: 0.6;
+}
+
+.dica-semana {
+  color: var(--mat-sys-on-surface-variant, #6b7280);
+  font-size: 0.9rem;
+}
+
+.semana-guia {
+  margin: 0.5rem 0 1.25rem;
+  padding: 0.75rem 1rem;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--mat-sys-primary, #1565c0) 5%, #fff);
+  border: 1px solid var(--mat-sys-outline-variant, #e5e7eb);
+}
+
+.semana-titulo {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--mat-sys-primary, #1565c0);
+}
+
+.semana-dias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.dia-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.4rem 0.2rem 0.7rem;
+  border-radius: 999px;
+  background: var(--mat-sys-surface, #fff);
+  border: 1px solid var(--mat-sys-outline-variant, #e5e7eb);
+}
+
+.dia-chip.hoje {
+  border-color: var(--mat-sys-primary, #1565c0);
+  border-width: 2px;
+}
+
+.dia-label {
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.dia-ok {
+  color: #1e7e34;
+}
+
+.dia-pendente {
+  color: #b26a00;
+}
+
+.mes {
+  margin-top: 1.75rem;
+}
+
+.mes-titulo {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.semana {
+  margin-top: 0.75rem;
+}
+
+.semana-subtitulo {
+  margin: 0 0 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--mat-sys-on-surface-variant, #6b7280);
+}
+
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.card {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--mat-sys-outline-variant, #e5e7eb);
+  border-radius: 14px;
+  background: var(--mat-sys-surface, #fff);
+  transition: background 0.12s ease;
+}
+
+.card:hover {
+  background: color-mix(
+    in srgb,
+    var(--mat-sys-primary, #1565c0) 4%,
+    transparent
+  );
+}
+
+.card-topo {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
 
-.data {
-  font-weight: 600;
+.card-data {
+  font-weight: 700;
+  color: var(--mat-sys-primary, #1565c0);
 }
 
-.turma {
+.card-turma {
   font-size: 0.85rem;
   color: var(--mat-sys-on-surface-variant, #6b7280);
 }
@@ -21,8 +173,26 @@
   flex: 1;
 }
 
-.texto {
-  margin: 0.25rem 0 0;
+.card-disciplina {
+  margin: 0.5rem 0 0;
+  font-weight: 600;
+}
+
+.card-campos {
+  margin: 0.35rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.campo dt {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--mat-sys-on-surface-variant, #6b7280);
+}
+
+.campo dd {
+  margin: 0.1rem 0 0;
   white-space: pre-wrap;
-  line-height: 1.5;
+  line-height: 1.45;
 }

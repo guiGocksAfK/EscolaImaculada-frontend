@@ -1,14 +1,5 @@
 <div class="filtros">
   <mat-form-field>
-    <mat-label>Turma</mat-label>
-    <mat-select [(ngModel)]="turmaId" (ngModelChange)="carregar()">
-      @for (t of turmas(); track t.id) {
-        <mat-option [value]="t.id">{{ t.nome }}</mat-option>
-      }
-    </mat-select>
-  </mat-form-field>
-
-  <mat-form-field>
     <mat-label>Mês</mat-label>
     <mat-select [(ngModel)]="mes" (ngModelChange)="carregar()">
       @for (m of meses; track $index) {
@@ -31,19 +22,19 @@
   <mat-progress-bar mode="indeterminate" />
 }
 
-@if (!turmaId) {
-  <p class="dica">Escolha a turma e o mês.</p>
+@if (!turmaId()) {
+  <p class="dica">Escolha a turma no topo da página e o mês.</p>
 } @else if (dados(); as d) {
   @if (d.dias.length === 0) {
     <p class="dica">Nenhuma chamada lançada neste mês.</p>
   } @else {
-    <div class="scroll">
+    <div class="scroll" #scrollBox>
       <table class="grade">
         <thead>
           <tr>
             <th class="col-nome">Aluno</th>
             @for (dia of d.dias; track dia) {
-              <th>{{ diaCurto(dia) }}</th>
+              <th [class.hoje]="dia === hoje">{{ diaCurto(dia) }}</th>
             }
             <th class="col-total">Faltas</th>
           </tr>
@@ -57,8 +48,10 @@
                   class="cel"
                   [class.f]="linha.porDia[dia] === 'F'"
                   [class.d]="linha.porDia[dia] === 'D'"
+                  [class.j]="ehJustificada(linha.alunoId, dia)"
+                  [class.hoje]="dia === hoje"
                 >
-                  {{ linha.porDia[dia] ?? '·' }}
+                  {{ celulaTexto(linha.porDia[dia], linha.alunoId, dia) }}
                 </td>
               }
               <td class="col-total">{{ linha.totalFaltas }}</td>
@@ -67,6 +60,8 @@
         </tbody>
       </table>
     </div>
-    <p class="legenda">C = compareceu · F = falta · D = desistente · · = sem registro</p>
+    <p class="legenda">
+      C = compareceu · F = falta · FJ = falta justificada · D = desistente · · = sem registro
+    </p>
   }
 }

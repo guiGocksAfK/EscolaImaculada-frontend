@@ -33,10 +33,54 @@
       }
     </mat-select>
   </mat-form-field>
+
+  <mat-form-field class="busca">
+    <mat-icon matPrefix>search</mat-icon>
+    <mat-label>Buscar</mat-label>
+    <input
+      matInput
+      placeholder="Aluno, turma ou texto da avaliação…"
+      [ngModel]="busca()"
+      (ngModelChange)="busca.set($event)"
+    />
+    @if (busca()) {
+      <button
+        matSuffix
+        mat-icon-button
+        matTooltip="Limpar busca"
+        (click)="busca.set('')"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+  </mat-form-field>
 </div>
 
 @if (carregando()) {
   <mat-progress-bar mode="indeterminate" />
+}
+
+@if (semAvaliacao(); as pendentes) {
+  @if (pendentes.length > 0) {
+    <div class="pendencias">
+      <span class="pendencias-titulo">
+        Sem avaliação registrada ({{ pendentes.length }})
+      </span>
+      <div class="pendencias-chips">
+        @for (a of pendentes; track a.id) {
+          <button
+            class="pendencia-chip"
+            mat-stroked-button
+            matTooltip="Lançar avaliação de {{ a.nome }}"
+            (click)="nova(a.id)"
+          >
+            <mat-icon>add</mat-icon>
+            {{ a.nome }}
+          </button>
+        }
+      </div>
+    </div>
+  }
 }
 
 @if (erro()) {
@@ -44,29 +88,43 @@
 }
 
 @if (!erro()) {
-  @if (registros().length > 0) {
-    <ul class="lista">
-      @for (a of registros(); track a.id; let i = $index) {
-        <li
-          animate.enter="item-entra"
-          [style.animation-delay.ms]="(i < 12 ? i : 12) * 30"
-        >
-          <div class="meta">
-            <span class="aluno">{{ a.aluno?.nome ?? '—' }}</span>
-            <span class="chip">{{ a.referencia }}</span>
-            <span class="turma">{{ a.turma?.nome ?? '' }}</span>
-            <span class="spacer"></span>
-            <button mat-icon-button matTooltip="Editar" (click)="editar(a)">
-              <mat-icon>edit</mat-icon>
-            </button>
-            <button mat-icon-button matTooltip="Excluir" (click)="excluir(a)">
-              <mat-icon>delete</mat-icon>
-            </button>
+  @if (grupos().length > 0) {
+    @for (turma of grupos(); track turma.chave) {
+      <section class="turma">
+        <h2 class="turma-titulo">{{ turma.rotulo }}</h2>
+        @for (referencia of turma.referencias; track referencia.chave) {
+          <div class="referencia">
+            <h3 class="referencia-subtitulo">{{ referencia.chave }}</h3>
+            <ul class="lista">
+              @for (a of referencia.itens; track a.id; let i = $index) {
+                <li
+                  class="card"
+                  animate.enter="item-entra"
+                  [style.animation-delay.ms]="(i < 12 ? i : 12) * 20"
+                >
+                  <div class="card-topo">
+                    <span class="card-aluno">{{ a.aluno?.nome ?? '—' }}</span>
+                    <span class="spacer"></span>
+                    <button mat-icon-button matTooltip="Editar" (click)="editar(a)">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button matTooltip="Excluir" (click)="excluir(a)">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                  <p class="card-texto">{{ a.texto }}</p>
+                </li>
+              }
+            </ul>
           </div>
-          <p class="texto">{{ a.texto }}</p>
-        </li>
-      }
-    </ul>
+        }
+      </section>
+    }
+  } @else if (carregou() && busca()) {
+    <div class="vazio">
+      <mat-icon>search_off</mat-icon>
+      <p>Nenhuma avaliação encontrada para "{{ busca() }}".</p>
+    </div>
   } @else if (carregou()) {
     <div class="vazio">
       <mat-icon>rate_review</mat-icon>

@@ -14,6 +14,7 @@ import { Turma } from '../../../core/models/turma.model';
 import { RelatorioResumo, ResumoAluno } from '../../../core/models/relatorio.model';
 import { baixarResumoPdf } from '../../../core/pdf/relatorio-pdf';
 import { iniciarCarregamento } from '../../../core/util/carregamento';
+import { PreferenciasService } from '../../../core/util/preferencias';
 
 @Component({
   selector: 'app-resumo-anual',
@@ -33,6 +34,7 @@ import { iniciarCarregamento } from '../../../core/util/carregamento';
 export class ResumoAnual {
   private readonly turmasService = inject(TurmasService);
   private readonly service = inject(RelatoriosService);
+  private readonly prefs = inject(PreferenciasService);
 
   readonly anos = [0, 1, 2].map((d) => new Date().getFullYear() - d);
   readonly colunas = ['aluno', 'presencas', 'faltas', 'justificadas', 'avaliacao'];
@@ -42,20 +44,25 @@ export class ResumoAnual {
   readonly carregando = signal(false);
 
   turmaId = '';
-  ano = new Date().getFullYear();
+  ano = this.prefs.ler<number>('resumo-anual.ano') ?? new Date().getFullYear();
 
   constructor() {
     this.turmasService.listar().subscribe((l) => {
       this.turmas.set(l);
+      const ultima = this.prefs.ler<string>('resumo-anual.turmaId');
       if (l.length === 1) {
         this.turmaId = l[0].id;
-        this.carregar();
+      } else if (ultima && l.some((t) => t.id === ultima)) {
+        this.turmaId = ultima;
       }
+      if (this.turmaId) this.carregar();
     });
   }
 
   carregar(): void {
     if (!this.turmaId) return;
+    this.prefs.salvar('resumo-anual.turmaId', this.turmaId);
+    this.prefs.salvar('resumo-anual.ano', this.ano);
     const fim = iniciarCarregamento(this.carregando);
     this.resumo.set(null);
     this.service.resumoPorAluno(this.turmaId, this.ano).subscribe({

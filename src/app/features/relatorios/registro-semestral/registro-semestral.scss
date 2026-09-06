@@ -1,0 +1,29 @@
+.dica-topo {
+  margin: 0 0 1rem;
+  color: var(--mat-sys-on-surface-variant, #6b7280);
+  max-width: 60ch;
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.filtros mat-form-field {
+  width: 200px;
+}
+
+.dica {
+  color: var(--mat-sys-on-surface-variant, #6b7280);
+  font-size: 0.9rem;
+}
+
+.resultado {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  background: #e6f4ea;
+  color: #1e7e34;
+}

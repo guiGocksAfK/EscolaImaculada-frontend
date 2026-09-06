@@ -1,11 +1,18 @@
 .filtros {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 1rem;
 }
 
 .filtros mat-form-field {
   width: 240px;
+}
+
+.nav-data {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .dica {
@@ -35,9 +42,9 @@
   font-weight: 600;
 }
 
-.tag--ok {
-  background: #e6f4ea;
-  color: #1e7e34;
+.tag--leitura {
+  background: #fff4e5;
+  color: #b26a00;
 }
 
 .roster {
@@ -73,6 +80,16 @@
 
 .nome {
   font-weight: 500;
+}
+
+.tg-c.tg-selecionado {
+  background: #e6f4ea !important;
+  color: #1e7e34 !important;
+}
+
+.tg-f.tg-selecionado {
+  background: #fce8e8 !important;
+  color: #c62828 !important;
 }
 
 .acoes {

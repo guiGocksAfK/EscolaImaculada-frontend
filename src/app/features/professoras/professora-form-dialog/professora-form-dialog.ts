@@ -25,7 +25,7 @@ export interface ProfessoraFormData {
 export interface ProfessoraFormResult {
   nome: string;
   cpf: string;
-  dataNascimento: string;
+  dataNascimento?: string;
   senha?: string;
 }
 
@@ -56,9 +56,7 @@ export class ProfessoraFormDialog implements OnInit {
   readonly form = this.fb.group({
     nome: ['', [Validators.required, Validators.maxLength(120)]],
     cpf: ['', [Validators.required, Validators.pattern(/^\d{11}$/)]],
-    dataNascimento: this.fb.control<Date | null>(null, {
-      validators: [Validators.required],
-    }),
+    dataNascimento: this.fb.control<Date | null>(null),
     senha: [
       '',
       this.data.professora
@@ -87,7 +85,7 @@ export class ProfessoraFormDialog implements OnInit {
     this.ref.close({
       nome: v.nome.trim(),
       cpf: v.cpf.replace(/\D/g, ''),
-      dataNascimento: toISODate(v.dataNascimento!),
+      dataNascimento: v.dataNascimento ? toISODate(v.dataNascimento) : undefined,
       senha: v.senha ? v.senha : undefined,
     });
   }
