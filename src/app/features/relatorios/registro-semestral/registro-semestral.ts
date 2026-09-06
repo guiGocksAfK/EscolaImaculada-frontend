@@ -6,6 +6,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { TurmasService } from '../../../core/services/turmas.service';
 import { AlunosService } from '../../../core/services/alunos.service';
@@ -53,6 +54,7 @@ export class RegistroSemestral {
   private readonly avaliacoesService = inject(AvaliacoesService);
   private readonly auth = inject(AuthService);
   private readonly prefs = inject(PreferenciasService);
+  private readonly snack = inject(MatSnackBar);
 
   readonly anos = [0, 1, 2].map((d) => new Date().getFullYear() - d);
   readonly turmas = signal<Turma[]>([]);
@@ -99,7 +101,7 @@ export class RegistroSemestral {
       justificadas: this.faltasService.listar({ turmaId: this.turmaId }),
       avaliacoes: this.avaliacoesService.listar({ turmaId: this.turmaId }),
     }).subscribe({
-      next: ({ alunos, meses: dadosMeses, conteudos, justificadas, avaliacoes }) => {
+      next: async ({ alunos, meses: dadosMeses, conteudos, justificadas, avaliacoes }) => {
         const noSemestre = (iso: string) => {
           const [anoStr, mesStr] = iso.split('-');
           return Number(anoStr) === this.ano && meses.includes(Number(mesStr));
@@ -110,26 +112,37 @@ export class RegistroSemestral {
         const justificadasDoSemestre = justificadas
           .filter((f) => noSemestre(f.data))
           .sort((a, b) => a.data.localeCompare(b.data));
+        // Avaliação não tem data estruturada — filtra pelo ano citado na
+        // referência (ex.: "1º semestre 2026"). Sem o ano, é descartada.
+        const avaliacoesDoAno = avaliacoes.filter((a) =>
+          (a.referencia ?? '').includes(String(this.ano)),
+        );
 
-        baixarRegistroSemestralPdf({
-          turmaNome: this.turmaNome,
-          semestre: this.semestre,
-          ano: this.ano,
-          meses: dadosMeses,
-          alunos,
-          conteudos: conteudosDoSemestre,
-          justificadas: justificadasDoSemestre,
-          avaliacoes,
-          responsavelNome: this.auth.usuario()?.nome ?? '',
-        });
-
-        this.gerado.set({
-          meses: dadosMeses.filter((m) => m.dias.length > 0).length,
-          conteudos: conteudosDoSemestre.length,
-          justificadas: justificadasDoSemestre.length,
-          alunos: alunos.length,
-        });
-        fim();
+        try {
+          await baixarRegistroSemestralPdf({
+            turmaNome: this.turmaNome,
+            semestre: this.semestre,
+            ano: this.ano,
+            meses: dadosMeses,
+            alunos,
+            conteudos: conteudosDoSemestre,
+            justificadas: justificadasDoSemestre,
+            avaliacoes: avaliacoesDoAno,
+            responsavelNome: this.auth.usuario()?.nome ?? '',
+          });
+          this.gerado.set({
+            meses: dadosMeses.filter((m) => m.dias.length > 0).length,
+            conteudos: conteudosDoSemestre.length,
+            justificadas: justificadasDoSemestre.length,
+            alunos: alunos.length,
+          });
+        } catch {
+          this.snack.open('Não foi possível gerar o PDF.', undefined, {
+            duration: 3000,
+          });
+        } finally {
+          fim();
+        }
       },
       error: () => fim(),
     });
