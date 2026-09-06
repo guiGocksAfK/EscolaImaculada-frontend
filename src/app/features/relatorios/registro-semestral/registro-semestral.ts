@@ -1,28 +1,18 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { TurmasService } from '../../../core/services/turmas.service';
-import { AlunosService } from '../../../core/services/alunos.service';
-import { ChamadaService } from '../../../core/services/chamada.service';
-import { ConteudoService } from '../../../core/services/conteudo.service';
-import { FaltasJustificadasService } from '../../../core/services/faltas-justificadas.service';
-import { AvaliacoesService } from '../../../core/services/avaliacoes.service';
-import { AuthService } from '../../../core/auth/auth.service';
+import { RelatoriosService } from '../../../core/services/relatorios.service';
 import { Turma } from '../../../core/models/turma.model';
 import { baixarRegistroSemestralPdf } from '../../../core/pdf/relatorio-pdf';
 import { iniciarCarregamento } from '../../../core/util/carregamento';
 import { PreferenciasService } from '../../../core/util/preferencias';
-
-const MESES_SEMESTRE: Record<1 | 2, number[]> = {
-  1: [2, 3, 4, 5, 6, 7],
-  2: [8, 9, 10, 11, 12],
-};
 
 interface ResumoGeracao {
   meses: number;
@@ -46,13 +36,9 @@ interface ResumoGeracao {
 })
 export class RegistroSemestral {
   private readonly turmasService = inject(TurmasService);
-  private readonly alunosService = inject(AlunosService);
-  private readonly chamadaService = inject(ChamadaService);
-  private readonly conteudoService = inject(ConteudoService);
-  private readonly faltasService = inject(FaltasJustificadasService);
-  private readonly avaliacoesService = inject(AvaliacoesService);
-  private readonly auth = inject(AuthService);
+  private readonly relatorios = inject(RelatoriosService);
   private readonly prefs = inject(PreferenciasService);
+  private readonly snack = inject(MatSnackBar);
 
   readonly anos = [0, 1, 2].map((d) => new Date().getFullYear() - d);
   readonly turmas = signal<Turma[]>([]);
@@ -60,6 +46,7 @@ export class RegistroSemestral {
   readonly gerado = signal<ResumoGeracao | null>(null);
 
   turmaId = '';
+  // Semestre 1 = fev–jul; 2 = ago–dez (mesma definição do backend).
   semestre: 1 | 2 = new Date().getMonth() + 1 <= 7 ? 1 : 2;
   ano = this.prefs.ler<number>('registro-semestral.ano') ?? new Date().getFullYear();
 
@@ -84,54 +71,47 @@ export class RegistroSemestral {
     this.prefs.salvar('registro-semestral.turmaId', this.turmaId);
     this.prefs.salvar('registro-semestral.ano', this.ano);
 
-    const meses = MESES_SEMESTRE[this.semestre];
     const fim = iniciarCarregamento(this.carregando);
     this.gerado.set(null);
 
-    forkJoin({
-      alunos: this.alunosService.listar({ turmaId: this.turmaId }),
-      meses: forkJoin(
-        meses.map((mes) =>
-          this.chamadaService.getMes(this.turmaId, this.ano, mes),
-        ),
-      ),
-      conteudos: this.conteudoService.listar({ turmaId: this.turmaId }),
-      justificadas: this.faltasService.listar({ turmaId: this.turmaId }),
-      avaliacoes: this.avaliacoesService.listar({ turmaId: this.turmaId }),
-    }).subscribe({
-      next: ({ alunos, meses: dadosMeses, conteudos, justificadas, avaliacoes }) => {
-        const noSemestre = (iso: string) => {
-          const [anoStr, mesStr] = iso.split('-');
-          return Number(anoStr) === this.ano && meses.includes(Number(mesStr));
-        };
-        const conteudosDoSemestre = conteudos
-          .filter((c) => noSemestre(c.data))
-          .sort((a, b) => a.data.localeCompare(b.data));
-        const justificadasDoSemestre = justificadas
-          .filter((f) => noSemestre(f.data))
-          .sort((a, b) => a.data.localeCompare(b.data));
-
-        baixarRegistroSemestralPdf({
-          turmaNome: this.turmaNome,
-          semestre: this.semestre,
-          ano: this.ano,
-          meses: dadosMeses,
-          alunos,
-          conteudos: conteudosDoSemestre,
-          justificadas: justificadasDoSemestre,
-          avaliacoes,
-          responsavelNome: this.auth.usuario()?.nome ?? '',
-        });
-
-        this.gerado.set({
-          meses: dadosMeses.filter((m) => m.dias.length > 0).length,
-          conteudos: conteudosDoSemestre.length,
-          justificadas: justificadasDoSemestre.length,
-          alunos: alunos.length,
-        });
-        fim();
-      },
-      error: () => fim(),
-    });
+    this.relatorios
+      .registroSemestral(this.turmaId, this.ano, this.semestre)
+      .subscribe({
+        next: async (res) => {
+          try {
+            await baixarRegistroSemestralPdf({
+              turmaNome: res.turmaNome,
+              semestre: res.semestre,
+              ano: res.ano,
+              meses: res.meses,
+              alunos: res.alunos,
+              conteudos: res.conteudos,
+              justificadas: res.justificadas,
+              avaliacoes: res.avaliacoes,
+              responsavelNome: res.responsavelNome,
+            });
+            this.gerado.set({
+              meses: res.meses.filter((m) => m.dias.length > 0).length,
+              conteudos: res.conteudos.length,
+              justificadas: res.justificadas.length,
+              alunos: res.alunos.length,
+            });
+          } catch {
+            this.snack.open('Não foi possível gerar o PDF.', undefined, {
+              duration: 3000,
+            });
+          } finally {
+            fim();
+          }
+        },
+        error: () => {
+          this.snack.open(
+            'Não foi possível carregar os dados do semestre.',
+            undefined,
+            { duration: 3000 },
+          );
+          fim();
+        },
+      });
   }
 }

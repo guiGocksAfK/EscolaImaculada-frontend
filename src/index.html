@@ -1,11 +1,23 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
     <title>EscolaImaculada</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <!--
+      CSP base (defesa em profundidade contra XSS). Em produção o ideal é
+      reforçar via header HTTP no servidor que serve o app (inclui
+      frame-ancestors, que é ignorado em <meta>). connect-src libera a API
+      local em dev; em produção a API é same-origin (/api) e cai em 'self'.
+      worker-src/blob: são para a geração de PDF no cliente (jspdf) e para o
+      dev server do Angular.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; connect-src 'self' http://localhost:3000 ws://localhost:*; object-src 'none'; base-uri 'self'; form-action 'self'"
+    />
   </head>
   <body>
     <app-root></app-root>

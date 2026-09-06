@@ -6,6 +6,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { TurmasService } from '../../../core/services/turmas.service';
 import { ChamadaService } from '../../../core/services/chamada.service';
@@ -38,6 +39,7 @@ export class ExportChamada {
   private readonly chamadaService = inject(ChamadaService);
   private readonly faltasService = inject(FaltasJustificadasService);
   private readonly prefs = inject(PreferenciasService);
+  private readonly snack = inject(MatSnackBar);
 
   readonly meses = [
     'Janeiro',
@@ -119,8 +121,15 @@ export class ExportChamada {
     return status ?? '·';
   }
 
-  baixarPdf(): void {
+  async baixarPdf(): Promise<void> {
     const d = this.dados();
-    if (d) baixarChamadaMensalPdf(d, this.turmaNome, this.justificadas());
+    if (!d) return;
+    try {
+      await baixarChamadaMensalPdf(d, this.turmaNome, this.justificadas());
+    } catch {
+      this.snack.open('Não foi possível gerar o PDF.', undefined, {
+        duration: 3000,
+      });
+    }
   }
 }

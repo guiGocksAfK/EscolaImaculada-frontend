@@ -23,6 +23,9 @@
     <mat-form-field>
       <mat-label>CPF (opcional)</mat-label>
       <input matInput formControlName="cpf" inputmode="numeric" maxlength="11" />
+      @if (edicao && data.aluno?.cpf) {
+        <mat-hint>CPF atual: {{ data.aluno?.cpf }} — preencha só para trocar.</mat-hint>
+      }
       @if (form.controls.cpf.invalid) {
         <mat-error>Use 11 dígitos, só números.</mat-error>
       }

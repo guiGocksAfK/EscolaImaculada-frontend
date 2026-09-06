@@ -11,9 +11,13 @@
     </mat-form-field>
 
     <mat-form-field>
-      <mat-label>CPF</mat-label>
+      <mat-label>{{ edicao ? 'Novo CPF (opcional)' : 'CPF' }}</mat-label>
       <input matInput formControlName="cpf" inputmode="numeric" maxlength="11" />
-      <mat-hint>Usado por ela para entrar no sistema.</mat-hint>
+      @if (edicao && data.professora?.cpf) {
+        <mat-hint>CPF atual: {{ data.professora?.cpf }} — preencha só para trocar.</mat-hint>
+      } @else {
+        <mat-hint>Usado por ela para entrar no sistema.</mat-hint>
+      }
       @if (form.controls.cpf.touched && form.controls.cpf.invalid) {
         <mat-error>Use 11 dígitos, só números.</mat-error>
       }

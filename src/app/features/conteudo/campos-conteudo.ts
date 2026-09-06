@@ -1,12 +1,8 @@
 /**
- * O campo `conteudo` do registro é um texto único no backend — não dá pra
- * mudar o schema só no front. Em vez de um textarea livre, guiamos o
- * preenchimento pelos campos de experiência da BNCC pra Educação Infantil e
- * serializamos tudo num texto formatado (que ainda é só uma string comum
- * pro backend). `parseConteudo` faz o caminho inverso pra reabrir o
- * registro em edição; texto que não bate com nenhum rótulo conhecido
- * (registros antigos, digitados livremente) cai em `outras`, sem perder
- * nada.
+ * Campos de experiência da BNCC (Educação Infantil) que compõem um registro
+ * de conteúdo. O backend agora guarda esses campos estruturados e gera o
+ * texto de exibição (`conteudo`) a partir deles. `parseConteudo` só serve
+ * de fallback para registros antigos, que só têm o texto.
  */
 export interface CamposConteudo {
   disciplina: string;
@@ -74,15 +70,28 @@ export function camposPreenchidos(c: CamposConteudo): boolean {
   );
 }
 
-export function serializarConteudo(c: CamposConteudo): string {
-  const partes: string[] = [];
-  if (c.disciplina.trim()) partes.push(`Conteúdo: ${c.disciplina.trim()}`);
-  for (const campo of CAMPOS_EXPERIENCIA) {
-    const valor = c[campo.chave].trim();
-    if (valor) partes.push(`${campo.rotulo}: ${valor}`);
-  }
-  if (c.outras.trim()) partes.push(c.outras.trim());
-  return partes.join('\n\n');
+/** Campos de um registro: usa os estruturados; cai no parser só se o
+ * registro for antigo (nenhum campo estruturado preenchido). */
+export function camposDoRegistro(r: {
+  disciplina?: string | null;
+  euOutroNos?: string | null;
+  corpoGestos?: string | null;
+  tracosSons?: string | null;
+  escutaFala?: string | null;
+  espacoTempo?: string | null;
+  outras?: string | null;
+  conteudo?: string;
+}): CamposConteudo {
+  const c: CamposConteudo = {
+    disciplina: r.disciplina ?? '',
+    euOutroNos: r.euOutroNos ?? '',
+    corpoGestos: r.corpoGestos ?? '',
+    tracosSons: r.tracosSons ?? '',
+    escutaFala: r.escutaFala ?? '',
+    espacoTempo: r.espacoTempo ?? '',
+    outras: r.outras ?? '',
+  };
+  return camposPreenchidos(c) ? c : parseConteudo(r.conteudo ?? '');
 }
 
 export function parseConteudo(texto: string): CamposConteudo {

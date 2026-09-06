@@ -127,7 +127,11 @@ export class Professoras {
         if (!res) return;
         const req = professora
           ? this.service.atualizar(professora.id, res)
-          : this.service.criar({ ...res, senha: res.senha ?? '' });
+          : this.service.criar({
+              ...res,
+              cpf: res.cpf ?? '',
+              senha: res.senha ?? '',
+            });
         req.subscribe({
           next: () => {
             this.snack.open(

@@ -24,7 +24,8 @@ export interface ProfessoraFormData {
 
 export interface ProfessoraFormResult {
   nome: string;
-  cpf: string;
+  /** Ausente na edição = mantém o CPF atual. */
+  cpf?: string;
   dataNascimento?: string;
   senha?: string;
 }
@@ -48,14 +49,20 @@ export class ProfessoraFormDialog implements OnInit {
   private readonly ref = inject(
     MatDialogRef<ProfessoraFormDialog, ProfessoraFormResult>,
   );
-  private readonly data = inject<ProfessoraFormData>(MAT_DIALOG_DATA);
+  protected readonly data = inject<ProfessoraFormData>(MAT_DIALOG_DATA);
 
   readonly edicao = !!this.data.professora;
   esconderSenha = true;
 
   readonly form = this.fb.group({
     nome: ['', [Validators.required, Validators.maxLength(120)]],
-    cpf: ['', [Validators.required, Validators.pattern(/^\d{11}$/)]],
+    // Na edição o CPF é opcional (chega mascarado da API; só envia se trocar).
+    cpf: [
+      '',
+      this.data.professora
+        ? [Validators.pattern(/^\d{11}$/)]
+        : [Validators.required, Validators.pattern(/^\d{11}$/)],
+    ],
     dataNascimento: this.fb.control<Date | null>(null),
     senha: [
       '',
@@ -70,7 +77,7 @@ export class ProfessoraFormDialog implements OnInit {
       const p = this.data.professora;
       this.form.patchValue({
         nome: p.nome,
-        cpf: (p.cpf ?? '').replace(/\D/g, ''),
+        // Não prefill do CPF — o valor da API é mascarado.
         dataNascimento: fromISODate(p.dataNascimento),
       });
     }
@@ -82,9 +89,10 @@ export class ProfessoraFormDialog implements OnInit {
       return;
     }
     const v = this.form.getRawValue();
+    const cpf = v.cpf.replace(/\D/g, '');
     this.ref.close({
       nome: v.nome.trim(),
-      cpf: v.cpf.replace(/\D/g, ''),
+      cpf: cpf ? cpf : undefined,
       dataNascimento: v.dataNascimento ? toISODate(v.dataNascimento) : undefined,
       senha: v.senha ? v.senha : undefined,
     });

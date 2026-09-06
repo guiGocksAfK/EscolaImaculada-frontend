@@ -26,10 +26,13 @@ export interface ProfessoraCreate {
   senha: string;
 }
 
-/** Edição de professora — senha opcional (em branco = não altera). */
+/**
+ * Edição de professora — senha e CPF opcionais (em branco = não altera).
+ * O CPF chega mascarado da API, então só é enviado quando realmente trocado.
+ */
 export interface ProfessoraUpdate {
   nome: string;
-  cpf: string;
+  cpf?: string;
   dataNascimento?: string;
   senha?: string;
 }

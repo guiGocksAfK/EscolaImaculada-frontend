@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { TurmasService } from '../../../core/services/turmas.service';
 import { RelatoriosService } from '../../../core/services/relatorios.service';
@@ -35,6 +36,7 @@ export class ResumoAnual {
   private readonly turmasService = inject(TurmasService);
   private readonly service = inject(RelatoriosService);
   private readonly prefs = inject(PreferenciasService);
+  private readonly snack = inject(MatSnackBar);
 
   readonly anos = [0, 1, 2].map((d) => new Date().getFullYear() - d);
   readonly colunas = ['aluno', 'presencas', 'faltas', 'justificadas', 'avaliacao'];
@@ -81,8 +83,15 @@ export class ResumoAnual {
       .join('\n\n');
   }
 
-  baixarPdf(): void {
+  async baixarPdf(): Promise<void> {
     const r = this.resumo();
-    if (r) baixarResumoPdf(r);
+    if (!r) return;
+    try {
+      await baixarResumoPdf(r);
+    } catch {
+      this.snack.open('Não foi possível gerar o PDF.', undefined, {
+        duration: 3000,
+      });
+    }
   }
 }

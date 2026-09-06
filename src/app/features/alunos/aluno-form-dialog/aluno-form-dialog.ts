@@ -54,7 +54,7 @@ export class AlunoFormDialog implements OnInit {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly turmasService = inject(TurmasService);
   private readonly ref = inject(MatDialogRef<AlunoFormDialog, AlunoFormResult>);
-  private readonly data = inject<AlunoFormData>(MAT_DIALOG_DATA);
+  protected readonly data = inject<AlunoFormData>(MAT_DIALOG_DATA);
 
   readonly statusOpcoes = STATUS_ALUNO;
   readonly statusLabel = STATUS_ALUNO_LABEL;
@@ -84,7 +84,8 @@ export class AlunoFormDialog implements OnInit {
       const a = this.data.aluno;
       this.form.patchValue({
         nome: a.nome,
-        cpf: a.cpf,
+        // CPF chega mascarado da API; deixa em branco e só envia se trocarem.
+        cpf: '',
         dataNascimento: fromISO(a.dataNascimento),
         nomeMae: a.nomeMae,
         nomePai: a.nomePai,
