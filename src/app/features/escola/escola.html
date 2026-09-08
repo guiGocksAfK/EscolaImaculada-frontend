@@ -15,31 +15,6 @@
 }
 
 @if (carregou() && !erro()) {
-  @if (fotoUrl(); as url) {
-    <div class="foto card">
-      <img [src]="url" alt="Fachada da escola (Google Street View)" />
-      @if (mapsLink(); as link) {
-        <a class="foto-link" [href]="link" target="_blank" rel="noopener">
-          <mat-icon>open_in_new</mat-icon>
-          Abrir no Google Maps
-        </a>
-      }
-    </div>
-  } @else if (enderecoSalvo() && !temApiKey) {
-    <div class="foto-aviso card">
-      <mat-icon>photo_camera</mat-icon>
-      <div>
-        <p>
-          Pra mostrar a foto da fachada aqui, configure uma chave da Street
-          View Static API do Google em <code>environment.ts</code>.
-        </p>
-        @if (mapsLink(); as link) {
-          <a [href]="link" target="_blank" rel="noopener">Abrir endereço no Google Maps</a>
-        }
-      </div>
-    </div>
-  }
-
   <form class="form card" [formGroup]="form" (ngSubmit)="salvar()">
     <mat-form-field>
       <mat-label>Nome da escola</mat-label>
@@ -72,4 +47,18 @@
       }
     </div>
   </form>
+
+  <div class="preview">
+    <p class="preview-legenda">Assim vai aparecer no cabeçalho dos relatórios:</p>
+    <div class="preview-card card">
+      <div class="preview-topo">
+        <span class="preview-nome">{{ previewNome() }}</span>
+      </div>
+      <p class="preview-titulo">Relatório — Turma exemplo</p>
+      @if (previewEndereco()) {
+        <p class="preview-linha">{{ previewEndereco() }}</p>
+      }
+      <p class="preview-linha">{{ previewEmitido }}</p>
+    </div>
+  </div>
 }

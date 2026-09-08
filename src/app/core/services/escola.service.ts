@@ -18,11 +18,33 @@ export class EscolaService {
   private readonly _dados = signal<Escola | null>(null);
   readonly dados = this._dados.asReadonly();
 
+  /** Nome da escola para a tela de login (endpoint público, sem token). */
+  private readonly _nomePublico = signal<string | null>(null);
+  readonly nomePublico = this._nomePublico.asReadonly();
+
   /** Dados da escola do usuário autenticado. */
   obter(): Observable<Escola> {
-    return this.http
-      .get<Escola>(this.base)
-      .pipe(tap((e) => this._dados.set(e)));
+    return this.http.get<Escola>(this.base).pipe(
+      tap((e) => {
+        this._dados.set(e);
+        this._nomePublico.set(e.nome);
+      }),
+    );
+  }
+
+  /**
+   * Busca só o nome da escola, sem autenticação — para a tela de login.
+   * Falha em silêncio (a tela cai no nome padrão do environment).
+   */
+  carregarNomePublico(): void {
+    this.http.get<{ nome: string | null }>(`${this.base}/publica`).subscribe({
+      next: (r) => {
+        if (r.nome) this._nomePublico.set(r.nome);
+      },
+      error: () => {
+        /* mantém o nome padrão */
+      },
+    });
   }
 
   /** Atualiza nome e endereço (somente diretora). */

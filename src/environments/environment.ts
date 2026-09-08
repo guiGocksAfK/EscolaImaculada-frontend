@@ -1,11 +1,8 @@
 export const environment = {
   production: false,
   apiUrl: 'http://localhost:3000',
-  // Street View Static API (foto da fachada em "Dados da escola"). Vazio =
-  // a tela mostra só o link "abrir no Google Maps", sem a foto.
-  googleMapsApiKey: '',
-  // Nome mostrado na tela de login — antes de autenticar não há como buscar
-  // o nome real da escola no backend. Depois do login, o app usa o nome
-  // cadastrado em "Dados da escola" em todo o resto (menu, PDFs etc.).
+  // Fallback do nome na tela de login. A tela tenta GET /escola/publica
+  // (sem token) primeiro; este valor só aparece se o backend não responder
+  // ou se a instância tiver mais de uma escola cadastrada.
   nomeEscolaPadrao: 'Escola Imaculada',
 };

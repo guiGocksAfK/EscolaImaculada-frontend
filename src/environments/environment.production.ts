@@ -1,9 +1,7 @@
 export const environment = {
   production: true,
   apiUrl: '/api',
-  // Preencha com uma key restrita por HTTP referrer (domínio da escola) e
-  // por API (só "Street View Static API"), criada no Google Cloud Console.
-  googleMapsApiKey: '',
-  // Nome mostrado na tela de login, antes de autenticar.
+  // Fallback do nome na tela de login (a tela busca GET /escola/publica
+  // primeiro; este valor só aparece se o backend não responder).
   nomeEscolaPadrao: 'Escola Imaculada',
 };

@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import {
   NonNullableFormBuilder,
   ReactiveFormsModule,
@@ -12,6 +12,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { EscolaService } from '../../../core/services/escola.service';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -31,18 +32,27 @@ import { environment } from '../../../../environments/environment';
 export class Login {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly auth = inject(AuthService);
+  private readonly escola = inject(EscolaService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
   readonly carregando = signal(false);
   readonly erro = signal<string | null>(null);
   readonly esconderSenha = signal(true);
-  readonly nomeEscola = environment.nomeEscolaPadrao;
+
+  /** Nome real da escola (endpoint público); cai no padrão se indisponível. */
+  readonly nomeEscola = computed(
+    () => this.escola.nomePublico() ?? environment.nomeEscolaPadrao,
+  );
 
   readonly form = this.fb.group({
     cpf: ['', [Validators.required, Validators.minLength(11)]],
     senha: ['', [Validators.required]],
   });
+
+  constructor() {
+    this.escola.carregarNomePublico();
+  }
 
   entrar(): void {
     if (this.form.invalid || this.carregando()) {
