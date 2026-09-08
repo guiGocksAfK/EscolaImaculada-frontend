@@ -3,18 +3,18 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { Escola, EscolaUpdate } from '../models/escola.model';
+import { Escola } from '../models/escola.model';
 
+/**
+ * Só leitura — nome e endereço são definidos uma vez no cadastro inicial
+ * da escola e não têm tela de edição (não faz sentido mudar depois).
+ */
 @Injectable({ providedIn: 'root' })
 export class EscolaService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/escola`;
 
-  /**
-   * Cache leve pra alimentar o cabeçalho/menu/PDFs sem cada tela ter que
-   * buscar de novo — só isso, sem lógica extra: `obter()`/`atualizar()`
-   * sempre fazem a chamada de verdade e atualizam o cache com o resultado.
-   */
+  /** Cache leve pra alimentar o cabeçalho/menu/PDFs sem repetir a chamada. */
   private readonly _dados = signal<Escola | null>(null);
   readonly dados = this._dados.asReadonly();
 
@@ -45,12 +45,5 @@ export class EscolaService {
         /* mantém o nome padrão */
       },
     });
-  }
-
-  /** Atualiza nome e endereço (somente diretora). */
-  atualizar(dto: EscolaUpdate): Observable<Escola> {
-    return this.http
-      .put<Escola>(this.base, dto)
-      .pipe(tap((e) => this._dados.set(e)));
   }
 }

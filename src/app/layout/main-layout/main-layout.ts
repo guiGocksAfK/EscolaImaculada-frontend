@@ -28,12 +28,6 @@ const NAV: NavItem[] = [
     path: '/professoras',
     papeis: ['DIRETORA'],
   },
-  {
-    label: 'Escola',
-    icon: 'apartment',
-    path: '/escola',
-    papeis: ['DIRETORA'],
-  },
 ];
 
 @Component({

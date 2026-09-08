@@ -70,12 +70,6 @@ export const routes: Routes = [
             (m) => m.Professoras,
           ),
       },
-      {
-        path: 'escola',
-        canActivate: [roleGuard('DIRETORA')],
-        loadComponent: () =>
-          import('./features/escola/escola').then((m) => m.Escola),
-      },
     ],
   },
   { path: '**', redirectTo: '' },

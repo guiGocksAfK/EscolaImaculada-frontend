@@ -23,6 +23,16 @@
   padding: 0.5rem;
 }
 
+.brand mat-icon {
+  flex-shrink: 0;
+}
+
+.brand span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 nav {
   display: flex;
   flex-direction: column;
