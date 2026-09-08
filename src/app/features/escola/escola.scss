@@ -5,11 +5,67 @@
   max-width: 560px;
 }
 
-.form.card {
+.card {
   background: var(--mat-sys-surface, #fff);
   border: 1px solid var(--mat-sys-outline-variant, #e5e7eb);
   border-radius: 14px;
+}
+
+.form.card {
   padding: 1.5rem;
+}
+
+.foto.card {
+  max-width: 560px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.foto img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--mat-sys-surface-variant, #eceff1);
+}
+
+.foto-link {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.6rem 1rem;
+  font-size: 0.85rem;
+  color: var(--mat-sys-primary, #1565c0);
+  text-decoration: none;
+}
+
+.foto-link:hover {
+  text-decoration: underline;
+}
+
+.foto-link mat-icon {
+  font-size: 1.1rem;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.foto-aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  max-width: 560px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  color: var(--mat-sys-on-surface-variant, #6b7280);
+}
+
+.foto-aviso p {
+  margin: 0 0 0.35rem;
+}
+
+.foto-aviso code {
+  background: var(--mat-sys-surface-variant, #eceff1);
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
 }
 
 mat-form-field {

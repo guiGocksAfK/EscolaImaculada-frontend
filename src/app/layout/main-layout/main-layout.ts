@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { EscolaService } from '../../core/services/escola.service';
 import { Papel } from '../../core/models/usuario.model';
 
 interface NavItem {
@@ -49,13 +50,22 @@ const NAV: NavItem[] = [
 })
 export class MainLayout {
   private readonly auth = inject(AuthService);
+  private readonly escolaService = inject(EscolaService);
 
   readonly usuario = this.auth.usuario;
+
+  readonly nomeEscola = computed(
+    () => this.escolaService.dados()?.nome ?? 'Escola',
+  );
 
   readonly itens = computed(() => {
     const papel = this.auth.papel();
     return NAV.filter((i) => !i.papeis || (papel && i.papeis.includes(papel)));
   });
+
+  constructor() {
+    if (!this.escolaService.dados()) this.escolaService.obter().subscribe();
+  }
 
   sair(): void {
     this.auth.logout();

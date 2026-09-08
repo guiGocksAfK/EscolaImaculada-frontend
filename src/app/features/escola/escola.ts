@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import {
   NonNullableFormBuilder,
   ReactiveFormsModule,
@@ -13,6 +13,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { EscolaService } from '../../core/services/escola.service';
 import { iniciarCarregamento } from '../../core/util/carregamento';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-escola',
@@ -37,6 +38,28 @@ export class Escola {
   readonly salvando = signal(false);
   readonly erro = signal<string | null>(null);
 
+  /** Endereço salvo (não o que está sendo digitado) — só ele vira a foto. */
+  readonly enderecoSalvo = signal('');
+
+  readonly temApiKey = !!environment.googleMapsApiKey;
+
+  readonly fotoUrl = computed(() => {
+    const endereco = this.enderecoSalvo();
+    if (!endereco || !this.temApiKey) return null;
+    const params = new URLSearchParams({
+      size: '640x300',
+      location: endereco,
+      key: environment.googleMapsApiKey,
+    });
+    return `https://maps.googleapis.com/maps/api/streetview?${params}`;
+  });
+
+  readonly mapsLink = computed(() => {
+    const endereco = this.enderecoSalvo();
+    if (!endereco) return null;
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`;
+  });
+
   readonly form = this.fb.group({
     nome: ['', [Validators.required, Validators.maxLength(150)]],
     endereco: ['', [Validators.required, Validators.maxLength(250)]],
@@ -52,6 +75,7 @@ export class Escola {
     this.service.obter().subscribe({
       next: (e) => {
         this.form.reset({ nome: e.nome, endereco: e.endereco });
+        this.enderecoSalvo.set(e.endereco);
         this.carregou.set(true);
         fim();
       },
@@ -72,6 +96,7 @@ export class Escola {
     this.service.atualizar(this.form.getRawValue()).subscribe({
       next: (e) => {
         this.form.reset({ nome: e.nome, endereco: e.endereco });
+        this.enderecoSalvo.set(e.endereco);
         this.salvando.set(false);
         this.snack.open('Dados da escola atualizados.', undefined, {
           duration: 2500,

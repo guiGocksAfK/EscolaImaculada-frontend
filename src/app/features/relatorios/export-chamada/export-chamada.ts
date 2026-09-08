@@ -11,6 +11,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { TurmasService } from '../../../core/services/turmas.service';
 import { ChamadaService } from '../../../core/services/chamada.service';
 import { FaltasJustificadasService } from '../../../core/services/faltas-justificadas.service';
+import { EscolaService } from '../../../core/services/escola.service';
 import { Turma } from '../../../core/models/turma.model';
 import { ChamadaMensal } from '../../../core/models/chamada.model';
 import { baixarChamadaMensalPdf } from '../../../core/pdf/relatorio-pdf';
@@ -38,6 +39,7 @@ export class ExportChamada {
   private readonly turmasService = inject(TurmasService);
   private readonly chamadaService = inject(ChamadaService);
   private readonly faltasService = inject(FaltasJustificadasService);
+  private readonly escolaService = inject(EscolaService);
   private readonly prefs = inject(PreferenciasService);
   private readonly snack = inject(MatSnackBar);
 
@@ -125,7 +127,12 @@ export class ExportChamada {
     const d = this.dados();
     if (!d) return;
     try {
-      await baixarChamadaMensalPdf(d, this.turmaNome, this.justificadas());
+      await baixarChamadaMensalPdf(
+        d,
+        this.turmaNome,
+        this.justificadas(),
+        this.escolaService.dados()?.nome ?? 'Escola',
+      );
     } catch {
       this.snack.open('Não foi possível gerar o PDF.', undefined, {
         duration: 3000,

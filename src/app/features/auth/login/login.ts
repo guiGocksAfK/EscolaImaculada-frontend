@@ -12,6 +12,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -36,6 +37,7 @@ export class Login {
   readonly carregando = signal(false);
   readonly erro = signal<string | null>(null);
   readonly esconderSenha = signal(true);
+  readonly nomeEscola = environment.nomeEscolaPadrao;
 
   readonly form = this.fb.group({
     cpf: ['', [Validators.required, Validators.minLength(11)]],
