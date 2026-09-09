@@ -28,6 +28,35 @@
 
 @if (!erro()) {
   @if (turmas().length > 0) {
+    <!-- Celular: cartões, com editar/excluir sempre visíveis -->
+    <ul class="cartoes-turma">
+      @for (t of turmas(); track t.id; let i = $index) {
+        <li
+          animate.enter="item-entra"
+          [style.animation-delay.ms]="(i < 12 ? i : 12) * 25"
+        >
+          <div class="info">
+            <span class="nome">{{ t.nome }}</span>
+            <span class="meta">
+              {{ rotuloPeriodo(t) }} · {{ t.anoLetivo }} ·
+              {{ t.professora?.nome ?? '—' }}
+            </span>
+          </div>
+          @if (podeGerenciar()) {
+            <div class="acoes">
+              <button mat-icon-button aria-label="Editar" (click)="editar(t)">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button aria-label="Excluir" (click)="remover(t)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          }
+        </li>
+      }
+    </ul>
+
+    <!-- Desktop: tabela -->
     <table mat-table [dataSource]="turmas()" class="tabela">
       <ng-container matColumnDef="nome">
         <th mat-header-cell *matHeaderCellDef>Turma</th>

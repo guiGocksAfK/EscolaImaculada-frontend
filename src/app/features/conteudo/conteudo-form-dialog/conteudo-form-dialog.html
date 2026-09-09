@@ -46,7 +46,9 @@
 
     <mat-chip-listbox multiple [value]="selecionados()" (change)="onSelecaoChange($event)">
       @for (campo of campos; track campo.chave) {
-        <mat-chip-option [value]="campo.chave">{{ campo.rotulo }}</mat-chip-option>
+        <mat-chip-option class="conteudo-chip" [value]="campo.chave">{{
+          campo.rotulo
+        }}</mat-chip-option>
       }
     </mat-chip-listbox>
 

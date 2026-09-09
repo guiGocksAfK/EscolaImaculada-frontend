@@ -9,6 +9,7 @@ import {
 } from '@angular/forms';
 import {
   MAT_DIALOG_DATA,
+  MatDialog,
   MatDialogModule,
   MatDialogRef,
 } from '@angular/material/dialog';
@@ -21,6 +22,10 @@ import { MatChipsModule, MatChipListboxChange } from '@angular/material/chips';
 
 import { TurmasService } from '../../../core/services/turmas.service';
 import { Turma } from '../../../core/models/turma.model';
+import {
+  ConfirmDialog,
+  ConfirmDialogData,
+} from '../../../shared/confirm-dialog/confirm-dialog';
 import {
   RegistroConteudo,
   RegistroConteudoCreate,
@@ -71,6 +76,7 @@ const pelosMenosUmCampo: ValidatorFn = (
 export class ConteudoFormDialog implements OnInit {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly turmasService = inject(TurmasService);
+  private readonly dialog = inject(MatDialog);
   private readonly ref = inject(
     MatDialogRef<ConteudoFormDialog, ConteudoFormResult>,
   );
@@ -139,8 +145,41 @@ export class ConteudoFormDialog implements OnInit {
     );
   }
 
+  /**
+   * Desmarcar um campo apaga o texto dele (é assim que "esse campo não foi
+   * trabalhado hoje" fica registrado). Se já tem texto escrito, confirma
+   * antes — senão um clique sem querer apaga o que a professora escreveu.
+   */
   onSelecaoChange(evento: MatChipListboxChange): void {
     const novasChaves = evento.value as ChaveCampoExperiencia[];
+    const anteriores = this.selecionados();
+    const removida = anteriores.find(
+      (c) => !novasChaves.includes(c) && this.form.controls[c].value.trim(),
+    );
+
+    if (removida) {
+      // mantém a caixa marcada até o usuário confirmar (ou não) a exclusão
+      this.selecionados.set(anteriores);
+      const rotulo = CAMPOS_EXPERIENCIA.find((c) => c.chave === removida)!
+        .rotulo;
+      this.dialog
+        .open(ConfirmDialog, {
+          data: {
+            titulo: 'Apagar texto?',
+            mensagem: `Já tem texto escrito em "${rotulo}". Desmarcar essa opção vai apagar esse texto. Deseja continuar?`,
+            confirmar: 'Apagar',
+            perigo: true,
+          } satisfies ConfirmDialogData,
+        })
+        .afterClosed()
+        .subscribe((ok) => {
+          if (!ok) return;
+          this.form.controls[removida].setValue('');
+          this.selecionados.set(novasChaves);
+        });
+      return;
+    }
+
     for (const campo of CAMPOS_EXPERIENCIA) {
       if (!novasChaves.includes(campo.chave)) {
         this.form.controls[campo.chave].setValue('');
