@@ -38,6 +38,18 @@ mat-chip-listbox {
   margin: 0.4rem 0 0.6rem;
 }
 
+/* Rótulos longos (ex.: "Espaço, tempo, quantidades...") quebram linha em vez
+   de cortar com reticências — o texto completo precisa ficar legível. */
+::ng-deep .conteudo-chip .mdc-evolution-chip__text-label {
+  white-space: normal;
+  line-height: 1.25;
+  padding: 0.2rem 0;
+}
+
+::ng-deep .conteudo-chip .mdc-evolution-chip__action {
+  height: auto;
+}
+
 .erro {
   margin: 0;
   color: #b3261e;

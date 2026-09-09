@@ -20,6 +20,43 @@
 
 @if (!erro()) {
   @if (professoras().length > 0) {
+    <!-- Celular: cartões, com editar/excluir sempre visíveis -->
+    <ul class="cartoes-professora">
+      @for (p of professoras(); track p.id; let i = $index) {
+        <li
+          animate.enter="item-entra"
+          [style.animation-delay.ms]="(i < 12 ? i : 12) * 25"
+        >
+          <div class="info">
+            <span class="nome">{{ p.nome }}</span>
+            <span class="meta">CPF {{ formatarCpf(p.cpf) }}</span>
+            <span class="meta">
+              Nasc.
+              {{
+                p.dataNascimento
+                  ? (p.dataNascimento | date: 'dd/MM/yyyy')
+                  : '—'
+              }}
+              · {{ p.totalTurmas }} turma(s)
+            </span>
+          </div>
+          <div class="acoes">
+            <button
+              mat-icon-button
+              aria-label="Editar / redefinir senha"
+              (click)="editar(p)"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button aria-label="Excluir" (click)="excluir(p)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+
+    <!-- Desktop: tabela -->
     <table mat-table [dataSource]="professoras()" class="tabela">
       <ng-container matColumnDef="nome">
         <th mat-header-cell *matHeaderCellDef>Nome</th>

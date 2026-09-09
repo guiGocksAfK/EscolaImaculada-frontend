@@ -249,3 +249,47 @@ a {
   color: var(--mat-sys-error, #b3261e);
   margin: 0.5rem 0;
 }
+
+/* Abas com navegação por arrasto (diretiva appAbasArrastaveis): sem as
+   setinhas de paginação; as abas rolam com o dedo. */
+.abas-arrastaveis .mat-mdc-tab-header-pagination {
+  display: none;
+}
+.abas-arrastaveis .mat-mdc-tab-label-container {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.abas-arrastaveis .mat-mdc-tab-label-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* ==== Ajustes para telas pequenas (celular) ========================== */
+@media (max-width: 640px) {
+  /* O botão de ação fica na mesma linha do título, mas discreto:
+     contorno em vez de preenchido, sem sombra, sem quebrar em 2 linhas. */
+  .page-head,
+  .head {
+    align-items: flex-start;
+  }
+
+  .page-head > button,
+  .head > button,
+  .page-head > a[mat-flat-button],
+  .head > a[mat-flat-button] {
+    flex-shrink: 0;
+    white-space: nowrap;
+    box-shadow: none;
+    border: 1px solid var(--mat-sys-outline-variant, #c3c8cf);
+    --mdc-filled-button-container-color: transparent;
+    --mdc-filled-button-label-text-color: var(--mat-sys-primary, #1565c0);
+  }
+
+  /* Filtros ocupam a linha inteira, um por linha. */
+  .filtros {
+    gap: 0.6rem;
+  }
+
+  .filtros mat-form-field {
+    width: 100%;
+  }
+}

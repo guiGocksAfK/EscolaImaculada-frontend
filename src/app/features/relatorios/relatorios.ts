@@ -1,16 +1,23 @@
 import { Component } from '@angular/core';
 import { MatTabsModule } from '@angular/material/tabs';
 
+import { AbasArrastaveis } from '../../shared/abas-arrastaveis.directive';
 import { ResumoAnual } from './resumo-anual/resumo-anual';
 import { ExportChamada } from './export-chamada/export-chamada';
 import { RegistroSemestral } from './registro-semestral/registro-semestral';
 
 @Component({
   selector: 'app-relatorios',
-  imports: [MatTabsModule, ResumoAnual, ExportChamada, RegistroSemestral],
+  imports: [
+    MatTabsModule,
+    AbasArrastaveis,
+    ResumoAnual,
+    ExportChamada,
+    RegistroSemestral,
+  ],
   template: `
     <h1>Relatórios</h1>
-    <mat-tab-group>
+    <mat-tab-group appAbasArrastaveis>
       <mat-tab label="Resumo por aluno">
         <app-resumo-anual />
       </mat-tab>

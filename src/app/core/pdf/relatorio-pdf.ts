@@ -38,11 +38,11 @@ function usarFonteUnicode(doc: jsPDF, fonteBase64: string): void {
   doc.setFont(FONTE, 'normal');
 }
 
-function metadados(doc: jsPDF, titulo: string): void {
+function metadados(doc: jsPDF, titulo: string, escolaNome: string): void {
   doc.setProperties({
     title: titulo,
     subject: titulo,
-    author: 'Escola Imaculada',
+    author: escolaNome,
     creator: 'Sistema de Registro de Classe',
   });
 }
@@ -90,7 +90,7 @@ function agora(): string {
  * poder ser chamado tanto manualmente quanto pelo hook `didDrawPage` do
  * autoTable (que repete em páginas de continuação).
  */
-function criarCabecalho(doc: jsPDF) {
+function criarCabecalho(doc: jsPDF, escolaNome: string) {
   let ultimaPagina = -1;
   return (titulo: string, subtitulo: string): number => {
     const pagina = doc.getNumberOfPages();
@@ -99,7 +99,7 @@ function criarCabecalho(doc: jsPDF) {
       doc.setFont(FONTE, 'normal');
       doc.setTextColor(0);
       doc.setFontSize(14);
-      doc.text('Escola Imaculada', MARGEM.left, 16);
+      doc.text(escolaNome, MARGEM.left, 16);
       doc.setFontSize(11);
       doc.text(titulo, MARGEM.left, 24);
       doc.setFontSize(9);
@@ -154,15 +154,18 @@ function baseTabela(
 // Resumo anual por aluno
 // ---------------------------------------------------------------------------
 
-export async function baixarResumoPdf(resumo: RelatorioResumo): Promise<void> {
+export async function baixarResumoPdf(
+  resumo: RelatorioResumo,
+  escolaNome: string,
+): Promise<void> {
   const { jsPDF, autoTable, fonteBase64 } = await carregarLibs();
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   usarFonteUnicode(doc, fonteBase64);
 
   const titulo = `Resumo do ano — ${resumo.turmaNome}`;
   const subtitulo = `Ano letivo ${resumo.ano} · ${resumo.diasLancados} dia(s) de chamada lançados · emitido em ${agora()}`;
-  metadados(doc, titulo);
-  const cabecalho = criarCabecalho(doc);
+  metadados(doc, titulo, escolaNome);
+  const cabecalho = criarCabecalho(doc, escolaNome);
   const y = cabecalho(titulo, subtitulo);
 
   autoTable(doc, {
@@ -234,6 +237,7 @@ export async function baixarChamadaMensalPdf(
   dados: ChamadaMensal,
   turmaNome: string,
   justificadas: Set<string> = new Set(),
+  escolaNome = 'Escola',
 ): Promise<void> {
   const { jsPDF, autoTable, fonteBase64 } = await carregarLibs();
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
@@ -241,8 +245,8 @@ export async function baixarChamadaMensalPdf(
 
   const titulo = `Chamada — ${turmaNome}`;
   const subtitulo = `${MESES[dados.mes - 1]} de ${dados.ano} · emitido em ${agora()}`;
-  metadados(doc, titulo);
-  const cabecalho = criarCabecalho(doc);
+  metadados(doc, titulo, escolaNome);
+  const cabecalho = criarCabecalho(doc, escolaNome);
   const y = cabecalho(titulo, subtitulo);
 
   tabelaFrequencia(
@@ -279,6 +283,7 @@ function situacaoAluno(a: { status: string }): string {
 
 /** Payload já montado e filtrado pelo backend (`/relatorios/registro-semestral`). */
 export interface RegistroSemestralDados {
+  escolaNome: string;
   turmaNome: string;
   semestre: 1 | 2;
   ano: number;
@@ -315,9 +320,9 @@ export async function baixarRegistroSemestralPdf(
   const periodo = `${p.semestre}º semestre de ${p.ano}`;
   const emitido = `emitido em ${agora()}`;
   const tituloDoc = `Registro de classe — ${p.turmaNome} — ${periodo}`;
-  metadados(doc, tituloDoc);
+  metadados(doc, tituloDoc, p.escolaNome);
 
-  const cabecalho = criarCabecalho(doc);
+  const cabecalho = criarCabecalho(doc, p.escolaNome);
   const justificadaChave = new Set(
     p.justificadas.map((f) => `${f.alunoId}|${f.data}`),
   );

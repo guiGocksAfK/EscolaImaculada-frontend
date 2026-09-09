@@ -11,6 +11,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { TurmasService } from '../../../core/services/turmas.service';
 import { RelatoriosService } from '../../../core/services/relatorios.service';
+import { EscolaService } from '../../../core/services/escola.service';
 import { Turma } from '../../../core/models/turma.model';
 import { RelatorioResumo, ResumoAluno } from '../../../core/models/relatorio.model';
 import { baixarResumoPdf } from '../../../core/pdf/relatorio-pdf';
@@ -35,6 +36,7 @@ import { PreferenciasService } from '../../../core/util/preferencias';
 export class ResumoAnual {
   private readonly turmasService = inject(TurmasService);
   private readonly service = inject(RelatoriosService);
+  private readonly escolaService = inject(EscolaService);
   private readonly prefs = inject(PreferenciasService);
   private readonly snack = inject(MatSnackBar);
 
@@ -87,7 +89,7 @@ export class ResumoAnual {
     const r = this.resumo();
     if (!r) return;
     try {
-      await baixarResumoPdf(r);
+      await baixarResumoPdf(r, this.escolaService.dados()?.nome ?? 'Escola');
     } catch {
       this.snack.open('Não foi possível gerar o PDF.', undefined, {
         duration: 3000,

@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { EscolaService } from '../../core/services/escola.service';
 
 interface Atalho {
   label: string;
@@ -68,9 +69,14 @@ const ATALHOS: Atalho[] = [
 })
 export class Dashboard {
   readonly auth = inject(AuthService);
+  private readonly escolaService = inject(EscolaService);
 
   readonly ehDiretora = this.auth.hasPapel('DIRETORA');
   readonly logoOk = signal(true);
+
+  readonly nomeEscola = computed(
+    () => this.escolaService.dados()?.nome ?? '',
+  );
 
   readonly primeiroNome = computed(
     () => this.auth.usuario()?.nome?.split(' ')[0] ?? '',

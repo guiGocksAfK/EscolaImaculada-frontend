@@ -1,22 +1,49 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { Escola, EscolaUpdate } from '../models/escola.model';
+import { Escola } from '../models/escola.model';
 
+/**
+ * Só leitura — nome e endereço são definidos uma vez no cadastro inicial
+ * da escola e não têm tela de edição (não faz sentido mudar depois).
+ */
 @Injectable({ providedIn: 'root' })
 export class EscolaService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/escola`;
 
+  /** Cache leve pra alimentar o cabeçalho/menu/PDFs sem repetir a chamada. */
+  private readonly _dados = signal<Escola | null>(null);
+  readonly dados = this._dados.asReadonly();
+
+  /** Nome da escola para a tela de login (endpoint público, sem token). */
+  private readonly _nomePublico = signal<string | null>(null);
+  readonly nomePublico = this._nomePublico.asReadonly();
+
   /** Dados da escola do usuário autenticado. */
   obter(): Observable<Escola> {
-    return this.http.get<Escola>(this.base);
+    return this.http.get<Escola>(this.base).pipe(
+      tap((e) => {
+        this._dados.set(e);
+        this._nomePublico.set(e.nome);
+      }),
+    );
   }
 
-  /** Atualiza nome e endereço (somente diretora). */
-  atualizar(dto: EscolaUpdate): Observable<Escola> {
-    return this.http.put<Escola>(this.base, dto);
+  /**
+   * Busca só o nome da escola, sem autenticação — para a tela de login.
+   * Falha em silêncio (a tela cai no nome padrão do environment).
+   */
+  carregarNomePublico(): void {
+    this.http.get<{ nome: string | null }>(`${this.base}/publica`).subscribe({
+      next: (r) => {
+        if (r.nome) this._nomePublico.set(r.nome);
+      },
+      error: () => {
+        /* mantém o nome padrão */
+      },
+    });
   }
 }

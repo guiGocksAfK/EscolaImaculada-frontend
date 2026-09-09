@@ -1,22 +1,72 @@
-<div class="layout">
-  <aside class="sidebar">
-    <div class="brand">
-      <mat-icon>school</mat-icon>
-      <span>Escola Imaculada</span>
-    </div>
+<mat-sidenav-container class="layout">
+  <mat-sidenav
+    #drawer
+    class="sidebar"
+    [mode]="isMobile() ? 'over' : 'side'"
+    [opened]="!isMobile()"
+    [fixedInViewport]="isMobile()"
+  >
+    <div class="sidebar-inner">
+      <div class="sidebar-topo">
+        <div class="brand">
+          <mat-icon>school</mat-icon>
+          <span [title]="nomeEscola()">{{ nomeEscola() }}</span>
+        </div>
+        @if (isMobile()) {
+          <button
+            mat-icon-button
+            class="close-btn"
+            (click)="drawer.close()"
+            aria-label="Fechar menu"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </div>
 
-    <nav>
-      @for (item of itens(); track item.path) {
-        <a [routerLink]="item.path" routerLinkActive="active" class="nav-link">
-          <mat-icon>{{ item.icon }}</mat-icon>
-          <span>{{ item.label }}</span>
-        </a>
+      <nav>
+        @for (grupo of grupos(); track $index) {
+          @if (grupo.label) {
+            <span class="nav-grupo-titulo">{{ grupo.label }}</span>
+          }
+          @for (item of grupo.itens; track item.path) {
+            <a
+              [routerLink]="item.path"
+              routerLinkActive="active"
+              class="nav-link"
+              (click)="fecharSeMobile(drawer)"
+            >
+              <mat-icon>{{ item.icon }}</mat-icon>
+              <span>{{ item.label }}</span>
+            </a>
+          }
+        }
+      </nav>
+
+      @if (usuario(); as u) {
+        <div class="user-card">
+          <span class="avatar">{{ iniciais(u.nome) }}</span>
+          <span class="user-info">
+            <span class="user-nome">{{ u.nome }}</span>
+            <span class="user-papel">{{ u.papel === 'DIRETORA' ? 'Diretora' : 'Professora' }}</span>
+          </span>
+        </div>
       }
-    </nav>
-  </aside>
+    </div>
+  </mat-sidenav>
 
-  <div class="content">
+  <mat-sidenav-content class="content">
     <header class="topbar">
+      @if (isMobile()) {
+        <button
+          mat-icon-button
+          class="menu-btn"
+          (click)="drawer.toggle()"
+          aria-label="Abrir menu"
+        >
+          <mat-icon>menu</mat-icon>
+        </button>
+      }
       <div class="spacer"></div>
       @if (usuario(); as u) {
         <span class="user">
@@ -34,5 +84,5 @@
     <main class="page">
       <router-outlet />
     </main>
-  </div>
-</div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

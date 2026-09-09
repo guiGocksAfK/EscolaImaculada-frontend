@@ -9,6 +9,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { TurmasService } from '../../../core/services/turmas.service';
 import { RelatoriosService } from '../../../core/services/relatorios.service';
+import { EscolaService } from '../../../core/services/escola.service';
 import { Turma } from '../../../core/models/turma.model';
 import { baixarRegistroSemestralPdf } from '../../../core/pdf/relatorio-pdf';
 import { iniciarCarregamento } from '../../../core/util/carregamento';
@@ -37,6 +38,7 @@ interface ResumoGeracao {
 export class RegistroSemestral {
   private readonly turmasService = inject(TurmasService);
   private readonly relatorios = inject(RelatoriosService);
+  private readonly escolaService = inject(EscolaService);
   private readonly prefs = inject(PreferenciasService);
   private readonly snack = inject(MatSnackBar);
 
@@ -80,6 +82,7 @@ export class RegistroSemestral {
         next: async (res) => {
           try {
             await baixarRegistroSemestralPdf({
+              escolaNome: this.escolaService.dados()?.nome ?? 'Escola',
               turmaNome: res.turmaNome,
               semestre: res.semestre,
               ano: res.ano,

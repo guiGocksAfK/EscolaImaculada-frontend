@@ -3,7 +3,7 @@
     @if (logoOk()) {
       <img
         src="logo-escola.jpeg"
-        alt="Brasão da Escola Imaculada"
+        [alt]="nomeEscola() ? 'Brasão de ' + nomeEscola() : 'Brasão da escola'"
         (error)="logoOk.set(false)"
       />
     } @else {
@@ -12,7 +12,9 @@
   </div>
 
   <div class="hero-texto">
-    <p class="escola">Centro de Educação Infantil Maria Imaculada Conceição</p>
+    @if (nomeEscola()) {
+      <p class="escola">{{ nomeEscola() }}</p>
+    }
     <h1>{{ saudacao }}, {{ primeiroNome() }}</h1>
     <p class="data">{{ dataHoje }}</p>
   </div>

@@ -4,6 +4,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 
+import { AbasArrastaveis } from '../../shared/abas-arrastaveis.directive';
 import { TurmasService } from '../../core/services/turmas.service';
 import { Turma } from '../../core/models/turma.model';
 import { PreferenciasService } from '../../core/util/preferencias';
@@ -18,6 +19,7 @@ import { Faltas } from './faltas/faltas';
     MatTabsModule,
     MatFormFieldModule,
     MatSelectModule,
+    AbasArrastaveis,
     ChamadaDia,
     ChamadaMensal,
     Faltas,
@@ -36,7 +38,7 @@ import { Faltas } from './faltas/faltas';
       </mat-form-field>
     </div>
 
-    <mat-tab-group>
+    <mat-tab-group appAbasArrastaveis>
       <mat-tab label="Chamada do dia">
         <app-chamada-dia [turmaId]="turmaId" />
       </mat-tab>
