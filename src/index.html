@@ -10,14 +10,20 @@
     <!--
       CSP base (defesa em profundidade contra XSS). Em produção o ideal é
       reforçar via header HTTP no servidor que serve o app (inclui
-      frame-ancestors, que é ignorado em <meta>). connect-src libera a API
-      local em dev; em produção a API é same-origin (/api) e cai em 'self'.
-      worker-src/blob: são para a geração de PDF no cliente (jspdf) e para o
-      dev server do Angular.
+      frame-ancestors, que é ignorado em <meta>). worker-src/blob: são para a
+      geração de PDF no cliente (jspdf) e para o dev server do Angular.
+
+      connect-src libera:
+      - http://localhost:3000 / ws://localhost:* -> API local e HMR em dev.
+      - https://*.onrender.com -> a API em produção (front no Vercel, back no
+        Render — domínios diferentes, então 'self' sozinho não basta). É um
+        wildcard pro domínio do Render de propósito, pra não precisar editar
+        este arquivo de novo quando o nome exato do serviço for definido —
+        ver TODO em environment.production.ts.
     -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; connect-src 'self' http://localhost:3000 ws://localhost:*; object-src 'none'; base-uri 'self'; form-action 'self'"
+      content="default-src 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; connect-src 'self' http://localhost:3000 ws://localhost:* https://*.onrender.com; object-src 'none'; base-uri 'self'; form-action 'self'"
     />
   </head>
   <body>
