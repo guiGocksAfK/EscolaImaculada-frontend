@@ -9,7 +9,7 @@
     <fieldset formGroupName="escola">
       <legend>Escola</legend>
 
-      <mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
         <mat-label>Nome da escola</mat-label>
         <input matInput formControlName="nome" autocomplete="organization" />
         @if (escola.controls.nome.touched && escola.controls.nome.invalid) {
@@ -17,7 +17,7 @@
         }
       </mat-form-field>
 
-      <mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
         <mat-label>Endereço</mat-label>
         <input
           matInput
@@ -30,12 +30,17 @@
           <mat-error>Informe o endereço.</mat-error>
         }
       </mat-form-field>
+
+      <p class="aviso-imutavel">
+        <mat-icon>info</mat-icon>
+        Esses dados não podem ser alterados depois do cadastro.
+      </p>
     </fieldset>
 
     <fieldset formGroupName="diretora">
       <legend>Diretora</legend>
 
-      <mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
         <mat-label>Nome completo</mat-label>
         <input matInput formControlName="nome" autocomplete="name" />
         @if (diretora.controls.nome.touched && diretora.controls.nome.invalid) {
@@ -43,7 +48,7 @@
         }
       </mat-form-field>
 
-      <mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
         <mat-label>CPF</mat-label>
         <input
           matInput
@@ -58,7 +63,7 @@
         }
       </mat-form-field>
 
-      <mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
         <mat-label>Data de nascimento</mat-label>
         <input
           matInput
@@ -75,7 +80,7 @@
         }
       </mat-form-field>
 
-      <mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
         <mat-label>Senha</mat-label>
         <input
           matInput
@@ -101,7 +106,7 @@
         }
       </mat-form-field>
 
-      <mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
         <mat-label>Confirmar senha</mat-label>
         <input
           matInput

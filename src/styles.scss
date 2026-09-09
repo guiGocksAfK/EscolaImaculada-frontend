@@ -250,6 +250,19 @@ a {
   margin: 0.5rem 0;
 }
 
+/* Abas com navegação por arrasto (diretiva appAbasArrastaveis): sem as
+   setinhas de paginação; as abas rolam com o dedo. */
+.abas-arrastaveis .mat-mdc-tab-header-pagination {
+  display: none;
+}
+.abas-arrastaveis .mat-mdc-tab-label-container {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.abas-arrastaveis .mat-mdc-tab-label-container::-webkit-scrollbar {
+  display: none;
+}
+
 /* ==== Ajustes para telas pequenas (celular) ========================== */
 @media (max-width: 640px) {
   /* O botão de ação fica na mesma linha do título, mas discreto:

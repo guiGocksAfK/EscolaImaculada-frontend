@@ -43,3 +43,67 @@
 .perigo {
   color: var(--mat-sys-error, #b3261e);
 }
+
+/* Cartões só aparecem no celular; no desktop vale a tabela. */
+.cartoes-aluno {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .filtros mat-form-field {
+    width: 100%;
+  }
+
+  .tabela {
+    display: none;
+  }
+
+  .cartoes-aluno {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .cartoes-aluno > li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--mat-sys-surface, #fff);
+    border: 1px solid var(--mat-sys-outline-variant, #e5e7eb);
+    border-radius: 14px;
+    padding: 0.7rem 0.4rem 0.7rem 1rem;
+  }
+
+  .cartoes-aluno .info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .cartoes-aluno .linha-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .cartoes-aluno .nome {
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  .cartoes-aluno .meta {
+    font-size: 0.82rem;
+    color: var(--mat-sys-on-surface-variant, #6b7280);
+  }
+
+  .cartoes-aluno .acoes {
+    display: flex;
+    flex-shrink: 0;
+  }
+}

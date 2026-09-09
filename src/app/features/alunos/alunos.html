@@ -44,6 +44,57 @@
 
 @if (!erro()) {
   @if (alunos().length > 0) {
+    <!-- Celular: cartões, com editar/situação/excluir sempre visíveis -->
+    <ul class="cartoes-aluno">
+      @for (a of alunos(); track a.id; let i = $index) {
+        <li
+          animate.enter="item-entra"
+          [style.animation-delay.ms]="(i < 12 ? i : 12) * 25"
+        >
+          <div class="info">
+            <div class="linha-topo">
+              <span class="nome">{{ a.nome }}</span>
+              <span [class]="classeStatus(a)">{{ rotuloStatus(a) }}</span>
+            </div>
+            <span class="meta">
+              {{ a.turma?.nome ?? '—' }} ·
+              {{ a.dataNascimento | date: 'dd/MM/yyyy' }} ({{ idade(a) }})
+            </span>
+            <span class="meta">mãe: {{ a.nomeMae || '—' }}</span>
+          </div>
+          @if (podeGerenciar()) {
+            <div class="acoes">
+              <button mat-icon-button aria-label="Editar" (click)="editar(a)">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                aria-label="Situação"
+                [matMenuTriggerFor]="menuCartao"
+              >
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #menuCartao="matMenu">
+                @for (s of statusOpcoes; track s) {
+                  <button
+                    mat-menu-item
+                    [disabled]="s === a.status"
+                    (click)="mudarStatus(a, s)"
+                  >
+                    Marcar como {{ statusLabel[s].toLowerCase() }}
+                  </button>
+                }
+                <button mat-menu-item class="perigo" (click)="excluir(a)">
+                  Excluir cadastro
+                </button>
+              </mat-menu>
+            </div>
+          }
+        </li>
+      }
+    </ul>
+
+    <!-- Desktop: tabela -->
     <table mat-table [dataSource]="alunos()" class="tabela">
       <ng-container matColumnDef="nome">
         <th mat-header-cell *matHeaderCellDef>Aluno</th>
