@@ -27,6 +27,10 @@ html,
 body {
   height: 100%;
   margin: 0;
+  /* mata o "scroll chaining" / efeito elástico do mobile — a página não
+     "estica" quando o conteúdo já cabe na tela. Não impede scroll real
+     dentro de conteúdo que de fato transborda. */
+  overscroll-behavior: none;
 }
 
 body {
