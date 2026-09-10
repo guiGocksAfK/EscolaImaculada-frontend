@@ -1,20 +1,32 @@
 import { Component, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import {
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
+import { AuthService } from '../../core/auth/auth.service';
 import { ProfessorasService } from '../../core/services/professoras.service';
+import { EscolaService } from '../../core/services/escola.service';
 import { iniciarCarregamento } from '../../core/util/carregamento';
 import { ProfessoraDetalhe } from '../../core/models/usuario.model';
+import { ResumoEscola } from '../../core/models/escola.model';
 import {
   ConfirmDialog,
   ConfirmDialogData,
 } from '../../shared/confirm-dialog/confirm-dialog';
+import { ExcluirEscolaDialog } from './excluir-escola-dialog/excluir-escola-dialog';
 import {
   ProfessoraFormData,
   ProfessoraFormDialog,
@@ -25,9 +37,13 @@ import {
   selector: 'app-professoras',
   imports: [
     DatePipe,
+    ReactiveFormsModule,
     MatTableModule,
     MatButtonModule,
     MatIconModule,
+    MatMenuModule,
+    MatFormFieldModule,
+    MatInputModule,
     MatProgressBarModule,
     MatTooltipModule,
   ],
@@ -36,6 +52,9 @@ import {
 })
 export class Professoras {
   private readonly service = inject(ProfessorasService);
+  private readonly escolaService = inject(EscolaService);
+  private readonly auth = inject(AuthService);
+  private readonly fb = inject(NonNullableFormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
 
@@ -45,12 +64,36 @@ export class Professoras {
   readonly carregou = signal(false);
   readonly erro = signal<string | null>(null);
 
+  // --- Escola ---
+  readonly escola = this.escolaService.dados;
+  readonly resumo = signal<ResumoEscola | null>(null);
+  readonly editandoEscola = signal(false);
+  readonly salvandoEscola = signal(false);
+  readonly excluindoEscola = signal(false);
+  readonly escolaForm = this.fb.group({
+    nome: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    endereco: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(200)]],
+  });
+
   constructor() {
     this.carregar();
+    if (!this.escolaService.dados()) {
+      this.escolaService.obter().subscribe({ error: () => {} });
+    }
+  }
+
+  private carregarResumo(): void {
+    this.escolaService.resumo().subscribe({
+      next: (r) => this.resumo.set(r),
+      error: () => {
+        /* card só não mostra os números */
+      },
+    });
   }
 
   carregar(): void {
     this.erro.set(null);
+    this.carregarResumo();
     const fim = iniciarCarregamento(this.carregando);
     this.service.listarDetalhado().subscribe({
       next: (l) => {
@@ -114,6 +157,73 @@ export class Professoras {
               undefined,
               { duration: 3500 },
             ),
+        });
+      });
+  }
+
+  // --- Escola: editar nome/endereço ---
+
+  editarEscola(): void {
+    const e = this.escola();
+    if (!e) return;
+    this.escolaForm.reset({ nome: e.nome, endereco: e.endereco });
+    this.editandoEscola.set(true);
+  }
+
+  cancelarEdicaoEscola(): void {
+    this.editandoEscola.set(false);
+  }
+
+  salvarEscola(): void {
+    if (this.escolaForm.invalid || this.salvandoEscola()) {
+      this.escolaForm.markAllAsTouched();
+      return;
+    }
+    this.salvandoEscola.set(true);
+    const { nome, endereco } = this.escolaForm.getRawValue();
+    this.escolaService.atualizar({ nome: nome.trim(), endereco: endereco.trim() }).subscribe({
+      next: () => {
+        this.salvandoEscola.set(false);
+        this.editandoEscola.set(false);
+        this.snack.open('Dados da escola atualizados.', undefined, {
+          duration: 2500,
+        });
+      },
+      error: (e) => {
+        this.salvandoEscola.set(false);
+        this.snack.open(
+          e?.error?.message ?? 'Não foi possível salvar.',
+          undefined,
+          { duration: 3500 },
+        );
+      },
+    });
+  }
+
+  // --- Escola: excluir (reautentica por senha) ---
+
+  excluirEscola(): void {
+    this.dialog
+      .open(ExcluirEscolaDialog)
+      .afterClosed()
+      .subscribe((senha: string | undefined) => {
+        if (!senha || this.excluindoEscola()) return;
+        this.excluindoEscola.set(true);
+        this.escolaService.excluir(senha).subscribe({
+          next: () => {
+            this.snack.open('Escola excluída.', undefined, { duration: 3000 });
+            this.auth.logout(); // token não vale mais — volta pro login
+          },
+          error: (e) => {
+            this.excluindoEscola.set(false);
+            this.snack.open(
+              e?.status === 401
+                ? 'Senha incorreta.'
+                : (e?.error?.message ?? 'Não foi possível excluir a escola.'),
+              undefined,
+              { duration: 3500 },
+            );
+          },
         });
       });
   }
