@@ -123,6 +123,8 @@ mat-form-field {
     height: 100dvh;
     min-height: 0;
     padding: 0.75rem;
+    /* nada de arrastar a tela — o .card rola por dentro se precisar */
+    overflow: hidden;
   }
 
   .card {

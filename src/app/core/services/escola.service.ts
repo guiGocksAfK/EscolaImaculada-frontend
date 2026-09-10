@@ -3,11 +3,12 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { Escola } from '../models/escola.model';
+import { Escola, ResumoEscola } from '../models/escola.model';
 
 /**
- * Só leitura — nome e endereço são definidos uma vez no cadastro inicial
- * da escola e não têm tela de edição (não faz sentido mudar depois).
+ * Nome e endereço são definidos no cadastro inicial. A diretora pode editar
+ * depois (tela de Professoras) e também excluir a escola inteira — essa
+ * última exige a senha dela de novo.
  */
 @Injectable({ providedIn: 'root' })
 export class EscolaService {
@@ -30,6 +31,29 @@ export class EscolaService {
         this._nomePublico.set(e.nome);
       }),
     );
+  }
+
+  /** Totais gerais da escola (alunos, professoras, turmas). */
+  resumo(): Observable<ResumoEscola> {
+    return this.http.get<ResumoEscola>(`${this.base}/resumo`);
+  }
+
+  /** Atualiza nome e endereço (só DIRETORA). */
+  atualizar(dados: { nome: string; endereco: string }): Observable<Escola> {
+    return this.http.put<Escola>(this.base, dados).pipe(
+      tap((e) => {
+        this._dados.set(e);
+        this._nomePublico.set(e.nome);
+      }),
+    );
+  }
+
+  /**
+   * Apaga a escola e todo o histórico. Exige a senha da diretora de novo.
+   * Depois disso o token não vale mais nada — quem chamar deve fazer logout.
+   */
+  excluir(senha: string): Observable<void> {
+    return this.http.delete<void>(this.base, { body: { senha } });
   }
 
   /**

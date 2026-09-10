@@ -107,3 +107,106 @@
     </div>
   }
 }
+
+@if (escola(); as e) {
+  <header class="page-head escola-head">
+    <div>
+      <h2>Escola</h2>
+      <p>Dados usados no login, no menu e nos relatórios.</p>
+    </div>
+    @if (!editandoEscola()) {
+      <button
+        mat-icon-button
+        [matMenuTriggerFor]="menuEscola"
+        aria-label="Ações da escola"
+      >
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #menuEscola="matMenu">
+        <button mat-menu-item (click)="editarEscola()">
+          <mat-icon>edit</mat-icon>
+          <span>Editar dados</span>
+        </button>
+        <button mat-menu-item (click)="excluirEscola()">
+          <mat-icon>delete_forever</mat-icon>
+          <span>Excluir escola</span>
+        </button>
+      </mat-menu>
+    }
+  </header>
+
+  <div class="escola-card">
+    @if (resumo(); as r) {
+      <p class="escola-card__band">
+        <span><b>{{ r.alunosAtivos }}</b> alunos ativos</span>
+        <span><b>{{ r.turmas }}</b> turmas</span>
+        <span><b>{{ r.professoras }}</b> professoras</span>
+        @if (r.alunosTransferidos + r.alunosDesistentes > 0) {
+          <span
+            ><b>{{ r.alunosTransferidos + r.alunosDesistentes }}</b>
+            ex-alunos</span
+          >
+        }
+      </p>
+    }
+
+    @if (!editandoEscola()) {
+      <dl class="escola-card__linhas">
+        <div class="linha">
+          <dt>Nome</dt>
+          <dd>{{ e.nome }}</dd>
+        </div>
+        <div class="linha">
+          <dt>Endereço</dt>
+          <dd>{{ e.endereco }}</dd>
+        </div>
+      </dl>
+    } @else {
+      <form
+        class="escola-card__form"
+        [formGroup]="escolaForm"
+        (ngSubmit)="salvarEscola()"
+      >
+        <mat-form-field>
+          <mat-label>Nome da escola</mat-label>
+          <input matInput formControlName="nome" autocomplete="organization" />
+          @if (
+            escolaForm.controls.nome.touched && escolaForm.controls.nome.invalid
+          ) {
+            <mat-error>Informe o nome (2 a 120 caracteres).</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Endereço</mat-label>
+          <input
+            matInput
+            formControlName="endereco"
+            autocomplete="street-address"
+          />
+          @if (
+            escolaForm.controls.endereco.touched &&
+            escolaForm.controls.endereco.invalid
+          ) {
+            <mat-error>Informe o endereço (2 a 200 caracteres).</mat-error>
+          }
+        </mat-form-field>
+
+        <div class="escola-card__acoes">
+          <button mat-button type="button" (click)="cancelarEdicaoEscola()">
+            Cancelar
+          </button>
+          <button
+            mat-flat-button
+            color="primary"
+            [disabled]="salvandoEscola()"
+            (click)="salvarEscola()"
+          >
+            <mat-icon>check</mat-icon>
+            Salvar
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+}

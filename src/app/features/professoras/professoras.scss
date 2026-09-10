@@ -3,6 +3,103 @@
   width: 90px;
 }
 
+/* Título "Escola" fora do card, igual ao cabeçalho de página lá em cima
+   (.page-head). O <h2> não é pego por `.page-head h1`, então replico aqui. */
+.escola-head {
+  margin-top: 2.5rem;
+
+  h2 {
+    margin: 0 0 0.2rem;
+    font-size: 1.5rem;
+    line-height: 1.2;
+  }
+}
+
+/* Espelha a moldura da .tabela (ver styles.scss): borda fina, raio 14,
+   overflow escondido, faixa de topo com 4% de tinta primária e linhas de
+   ponta a ponta separadas por filete. */
+.escola-card {
+  background: var(--mat-sys-surface, #fff);
+  border: 1px solid var(--mat-sys-outline-variant, #e5e7eb);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+/* Faixa de topo = equivalente ao cabeçalho da tabela (.mat-mdc-header-row). */
+.escola-card__band {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--mat-sys-outline-variant, #e5e7eb);
+  background: color-mix(in srgb, var(--mat-sys-primary, #1565c0) 4%, transparent);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1.5rem;
+  font-size: 0.88rem;
+  color: var(--mat-sys-on-surface-variant, #5f6b7a);
+
+  b {
+    margin-right: 0.3rem;
+    font-weight: 700;
+    color: var(--mat-sys-on-surface, #1f2937);
+  }
+}
+
+/* Linhas com o mesmo padding das células da tabela (0.85rem 1rem). */
+.escola-card__linhas {
+  margin: 0;
+
+  .linha {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 1rem;
+    padding: 0.85rem 1rem;
+  }
+
+  .linha + .linha {
+    border-top: 1px solid var(--mat-sys-outline-variant, #e5e7eb);
+  }
+
+  dt {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--mat-sys-on-surface-variant, #5f6b7a);
+  }
+
+  dd {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.4;
+  }
+}
+
+.escola-card__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+
+  mat-form-field {
+    width: 100%;
+  }
+}
+
+/* Ações do modo edição (Cancelar / Salvar). Editar e Excluir ficam num
+   menu ⋮ no cabeçalho — raramente usados, sem chamar atenção. */
+.escola-card__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 560px) {
+  .escola-card__linhas .linha {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
+}
+
 .col-acoes {
   text-align: right;
   white-space: nowrap;

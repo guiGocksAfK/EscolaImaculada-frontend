@@ -1,14 +1,25 @@
 .login-wrap {
+  /* fallback p/ navegadores sem dvh */
   min-height: 100vh;
+  /* mobile: casa exatamente com a área visível (100vh é maior que isso no
+     celular e deixava a tela arrastável). min-height também vira dvh senão
+     o 100vh do fallback força a altura de volta pra cima. */
+  min-height: 100dvh;
+  height: 100dvh;
   display: grid;
   place-items: center;
   padding: 1.5rem;
+  overflow: hidden;
   background: linear-gradient(135deg, #e8eef7, #f4f6f9);
 }
 
 .card {
   width: 100%;
   max-width: 380px;
+  /* válvula de segurança: se o card não couber numa tela minúscula, ele
+     rola por dentro em vez de a página inteira se mexer */
+  max-height: 100%;
+  overflow-y: auto;
   background: var(--mat-sys-surface, #fff);
   border-radius: 14px;
   padding: 2rem 1.75rem;
