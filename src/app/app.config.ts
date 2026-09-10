@@ -11,6 +11,7 @@ import {
   withViewTransitions,
 } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { MAT_DIALOG_DEFAULT_OPTIONS } from '@angular/material/dialog';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import {
   DateAdapter,
@@ -48,6 +49,13 @@ export const appConfig: ApplicationConfig = {
       // centralizado dentro da caixa (parecendo texto já digitado) em vez
       // de subir pro topo — confunde muito em campos maiores, tipo textarea.
       useValue: { appearance: 'outline', floatLabel: 'always' },
+    },
+    {
+      provide: MAT_DIALOG_DEFAULT_OPTIONS,
+      // disableClose global: nenhum modal fecha por clique fora ou ESC —
+      // só pelos botões (Cancelar/Salvar). Evita perder um formulário
+      // preenchido por um clique acidental no backdrop.
+      useValue: { disableClose: true },
     },
   ],
 };

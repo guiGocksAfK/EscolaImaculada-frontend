@@ -2,7 +2,10 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  min-width: 340px;
+  /* largura confortável no desktop, mas nunca maior que o modal (senão
+     rola pro lado no celular) — mesmo padrão dos outros form-dialogs */
+  width: 340px;
+  max-width: 100%;
   padding-top: 0.5rem;
 }
 
