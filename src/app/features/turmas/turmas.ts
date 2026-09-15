@@ -51,6 +51,14 @@ export class Turmas {
       : t.professora.nome;
   }
 
+  /**
+   * Destaca a turma da própria diretora no meio das demais — só faz sentido
+   * pra ela, já que a professora comum só vê as turmas dela mesma aqui.
+   */
+  souResponsavel(t: Turma): boolean {
+    return this.podeGerenciar() && t.professoraId === this.auth.usuario()?.id;
+  }
+
   readonly turmas = signal<Turma[]>([]);
   readonly carregando = signal(false);
   readonly carregou = signal(false);

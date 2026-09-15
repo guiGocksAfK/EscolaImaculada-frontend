@@ -17,6 +17,7 @@ import { AlunosService } from '../../core/services/alunos.service';
 import { TurmasService } from '../../core/services/turmas.service';
 import { iniciarCarregamento } from '../../core/util/carregamento';
 import { PreferenciasService } from '../../core/util/preferencias';
+import { minhaTurmaId } from '../../core/util/minha-turma';
 import { Turma } from '../../core/models/turma.model';
 import {
   Aluno,
@@ -64,6 +65,8 @@ export class Alunos {
   private readonly colunasBase = ['nome', 'turma', 'nascimento', 'status'];
 
   readonly turmas = signal<Turma[]>([]);
+  /** Turma da qual o usuário é a responsável, se houver (marca "(sua turma)" no seletor). */
+  readonly minhaTurma = signal<string | null>(null);
   readonly alunos = signal<Aluno[]>([]);
   readonly carregando = signal(false);
   readonly carregou = signal(false);
@@ -81,8 +84,13 @@ export class Alunos {
   constructor() {
     this.turmasService.listar().subscribe((l) => {
       this.turmas.set(l);
+      this.minhaTurma.set(minhaTurmaId(l, this.auth.usuario()?.id));
       if (this.filtroTurma && !l.some((t) => t.id === this.filtroTurma)) {
         this.filtroTurma = '';
+        this.carregar();
+      } else if (!this.filtroTurma && this.minhaTurma()) {
+        // Sem filtro salvo: já abre na turma da qual ela é responsável.
+        this.filtroTurma = this.minhaTurma()!;
         this.carregar();
       }
     });

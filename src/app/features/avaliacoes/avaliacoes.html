@@ -15,7 +15,9 @@
     <mat-select [(ngModel)]="filtroTurma" (ngModelChange)="aoMudarTurma()">
       <mat-option value="">Todas</mat-option>
       @for (t of turmas(); track t.id) {
-        <mat-option [value]="t.id">{{ t.nome }}</mat-option>
+        <mat-option [value]="t.id">
+          {{ t.nome }}{{ t.id === minhaTurma() ? ' (sua turma)' : '' }}
+        </mat-option>
       }
     </mat-select>
   </mat-form-field>

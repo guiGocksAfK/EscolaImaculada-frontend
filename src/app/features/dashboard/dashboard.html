@@ -20,6 +20,16 @@
   </div>
 </section>
 
+@if (nomeMinhaTurma(); as nome) {
+  <a routerLink="/turmas" class="minha-turma">
+    <mat-icon>groups</mat-icon>
+    <span>
+      Você também é responsável pela turma <strong>{{ nome }}</strong>.
+    </span>
+    <mat-icon class="chevron">chevron_right</mat-icon>
+  </a>
+}
+
 <h2 class="secao">O que você quer fazer?</h2>
 
 <a [routerLink]="principal.path" class="atalho atalho--destaque">

@@ -5,9 +5,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 
 import { AbasArrastaveis } from '../../shared/abas-arrastaveis.directive';
+import { AuthService } from '../../core/auth/auth.service';
 import { TurmasService } from '../../core/services/turmas.service';
 import { Turma } from '../../core/models/turma.model';
 import { PreferenciasService } from '../../core/util/preferencias';
+import { minhaTurmaId } from '../../core/util/minha-turma';
 import { ChamadaDia } from './chamada-dia/chamada-dia';
 import { ChamadaMensal } from './chamada-mensal/chamada-mensal';
 import { Faltas } from './faltas/faltas';
@@ -32,7 +34,9 @@ import { Faltas } from './faltas/faltas';
         <mat-select [(ngModel)]="turmaId" (ngModelChange)="onTurmaChange()">
           <mat-option value="">Todas as turmas</mat-option>
           @for (t of turmas(); track t.id) {
-            <mat-option [value]="t.id">{{ t.nome }}</mat-option>
+            <mat-option [value]="t.id">
+              {{ t.nome }}{{ t.id === minhaTurma() ? ' (sua turma)' : '' }}
+            </mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -72,9 +76,13 @@ import { Faltas } from './faltas/faltas';
 })
 export class Chamada {
   private readonly turmasService = inject(TurmasService);
+  private readonly auth = inject(AuthService);
   private readonly prefs = inject(PreferenciasService);
 
   readonly turmas = signal<Turma[]>([]);
+
+  /** Turma da qual o usuário é a responsável, se houver (marca "(sua turma)" no seletor). */
+  readonly minhaTurma = signal<string | null>(null);
 
   /** Turma selecionada, compartilhada por todas as abas de chamada. */
   turmaId = this.prefs.ler<string>('chamada.turmaId') ?? '';
@@ -82,10 +90,14 @@ export class Chamada {
   constructor() {
     this.turmasService.listar().subscribe((l) => {
       this.turmas.set(l);
-      if (l.length === 1) {
-        this.turmaId = l[0].id;
-      } else if (this.turmaId && !l.some((t) => t.id === this.turmaId)) {
+      this.minhaTurma.set(minhaTurmaId(l, this.auth.usuario()?.id));
+      if (this.turmaId && !l.some((t) => t.id === this.turmaId)) {
         this.turmaId = '';
+      }
+      // Sem preferência salva: já abre direto na turma da qual ela é
+      // responsável, pra não precisar escolher toda vez.
+      if (!this.turmaId && this.minhaTurma()) {
+        this.turmaId = this.minhaTurma()!;
       }
       this.prefs.salvar('chamada.turmaId', this.turmaId);
     });

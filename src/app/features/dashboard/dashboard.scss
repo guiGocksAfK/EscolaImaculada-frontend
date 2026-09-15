@@ -70,6 +70,36 @@
   }
 }
 
+/* ---- Aviso "sua turma" (diretora que também leciona) ------------------ */
+
+.minha-turma {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  padding: 0.65rem 1rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--mat-sys-primary, #1565c0) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--mat-sys-primary, #1565c0) 25%, transparent);
+  color: inherit;
+  text-decoration: none;
+  font-size: 0.88rem;
+
+  mat-icon:first-child {
+    color: var(--mat-sys-primary, #1565c0);
+    flex-shrink: 0;
+  }
+
+  span {
+    flex: 1;
+  }
+
+  .chevron {
+    color: var(--mat-sys-primary, #1565c0);
+    flex-shrink: 0;
+  }
+}
+
 /* ---- Atalhos ------------------------------------------------------- */
 
 .secao {

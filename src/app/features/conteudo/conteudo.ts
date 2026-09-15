@@ -11,10 +11,12 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
+import { AuthService } from '../../core/auth/auth.service';
 import { TurmasService } from '../../core/services/turmas.service';
 import { ConteudoService } from '../../core/services/conteudo.service';
 import { iniciarCarregamento } from '../../core/util/carregamento';
 import { PreferenciasService } from '../../core/util/preferencias';
+import { minhaTurmaId } from '../../core/util/minha-turma';
 import { fromISODate, toISODate } from '../../core/date/iso-date';
 import { Turma } from '../../core/models/turma.model';
 import { RegistroConteudo } from '../../core/models/conteudo.model';
@@ -96,12 +98,15 @@ function formatarDiaMes(d: Date): string {
 })
 export class Conteudo {
   private readonly turmasService = inject(TurmasService);
+  private readonly auth = inject(AuthService);
   private readonly service = inject(ConteudoService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
   private readonly prefs = inject(PreferenciasService);
 
   readonly turmas = signal<Turma[]>([]);
+  /** Turma da qual o usuário é a responsável, se houver (marca "(sua turma)" no seletor). */
+  readonly minhaTurma = signal<string | null>(null);
   readonly registros = signal<RegistroConteudo[]>([]);
   readonly carregando = signal(false);
   readonly carregou = signal(false);
@@ -175,8 +180,13 @@ export class Conteudo {
   constructor() {
     this.turmasService.listar().subscribe((l) => {
       this.turmas.set(l);
+      this.minhaTurma.set(minhaTurmaId(l, this.auth.usuario()?.id));
       if (this.filtroTurma && !l.some((t) => t.id === this.filtroTurma)) {
         this.filtroTurma = '';
+        this.carregar();
+      } else if (!this.filtroTurma && this.minhaTurma()) {
+        // Sem filtro salvo: já abre na turma da qual ela é responsável.
+        this.filtroTurma = this.minhaTurma()!;
         this.carregar();
       }
     });

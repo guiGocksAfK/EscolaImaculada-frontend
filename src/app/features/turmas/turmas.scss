@@ -4,6 +4,18 @@
   width: 1%;
 }
 
+.chip-sua-turma {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  vertical-align: middle;
+  color: var(--mat-sys-primary, #1565c0);
+  background: color-mix(in srgb, var(--mat-sys-primary, #1565c0) 12%, transparent);
+}
+
 /* Cartões só aparecem no celular; no desktop vale a tabela. */
 .cartoes-turma {
   display: none;

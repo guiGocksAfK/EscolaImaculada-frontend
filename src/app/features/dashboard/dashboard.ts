@@ -4,6 +4,8 @@ import { MatIconModule } from '@angular/material/icon';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { EscolaService } from '../../core/services/escola.service';
+import { TurmasService } from '../../core/services/turmas.service';
+import { minhaTurmaId } from '../../core/util/minha-turma';
 
 interface Atalho {
   label: string;
@@ -70,9 +72,24 @@ const ATALHOS: Atalho[] = [
 export class Dashboard {
   readonly auth = inject(AuthService);
   private readonly escolaService = inject(EscolaService);
+  private readonly turmasService = inject(TurmasService);
 
   readonly ehDiretora = this.auth.hasPapel('DIRETORA');
   readonly logoOk = signal(true);
+
+  /** Nome da turma da qual a diretora também é a responsável, se houver. */
+  readonly nomeMinhaTurma = signal<string | null>(null);
+
+  constructor() {
+    // Só interessa mostrar pra diretora: pra uma professora comum, o
+    // dashboard inteiro já é sobre a turma dela.
+    if (this.ehDiretora) {
+      this.turmasService.listar().subscribe((l) => {
+        const id = minhaTurmaId(l, this.auth.usuario()?.id);
+        this.nomeMinhaTurma.set(l.find((t) => t.id === id)?.nome ?? null);
+      });
+    }
+  }
 
   readonly nomeEscola = computed(
     () => this.escolaService.dados()?.nome ?? '',
