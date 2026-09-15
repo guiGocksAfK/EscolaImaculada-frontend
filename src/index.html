@@ -15,15 +15,14 @@
 
       connect-src libera:
       - http://localhost:3000 / ws://localhost:* -> API local e HMR em dev.
-      - https://*.onrender.com -> a API em produção (front no Vercel, back no
-        Render — domínios diferentes, então 'self' sozinho não basta). É um
-        wildcard pro domínio do Render de propósito, pra não precisar editar
-        este arquivo de novo quando o nome exato do serviço for definido —
-        ver TODO em environment.production.ts.
+      - https://escolaimaculada.duckdns.org -> a API em produção (front no
+        Vercel, back na VM da Oracle — domínios diferentes, então 'self'
+        sozinho não basta). É o domínio exato, sem wildcard; se a API mudar de
+        endereço, mude aqui e em environment.production.ts.
     -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; connect-src 'self' http://localhost:3000 ws://localhost:* https://*.onrender.com; object-src 'none'; base-uri 'self'; form-action 'self'"
+      content="default-src 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; connect-src 'self' http://localhost:3000 ws://localhost:* https://escolaimaculada.duckdns.org; object-src 'none'; base-uri 'self'; form-action 'self'"
     />
   </head>
   <body>
