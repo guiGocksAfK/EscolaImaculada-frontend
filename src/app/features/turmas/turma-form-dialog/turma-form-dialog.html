@@ -30,8 +30,10 @@
     <mat-form-field>
       <mat-label>Professora responsável</mat-label>
       <mat-select formControlName="professoraId">
-        @for (prof of professoras(); track prof.id) {
-          <mat-option [value]="prof.id">{{ prof.nome }}</mat-option>
+        @for (resp of responsaveis(); track resp.id) {
+          <mat-option [value]="resp.id">
+            {{ resp.nome }}{{ resp.papel === 'DIRETORA' ? ' (diretora)' : '' }}
+          </mat-option>
         }
       </mat-select>
       @if (form.controls.professoraId.touched && form.controls.professoraId.invalid) {

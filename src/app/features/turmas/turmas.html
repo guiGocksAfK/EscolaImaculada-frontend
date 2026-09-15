@@ -39,7 +39,7 @@
             <span class="nome">{{ t.nome }}</span>
             <span class="meta">
               {{ rotuloPeriodo(t) }} · {{ t.anoLetivo }} ·
-              {{ t.professora?.nome ?? '—' }}
+              {{ rotuloResponsavel(t) }}
             </span>
           </div>
           @if (podeGerenciar()) {
@@ -75,7 +75,7 @@
 
       <ng-container matColumnDef="professora">
         <th mat-header-cell *matHeaderCellDef>Professora</th>
-        <td mat-cell *matCellDef="let t">{{ t.professora?.nome ?? '—' }}</td>
+        <td mat-cell *matCellDef="let t">{{ rotuloResponsavel(t) }}</td>
       </ng-container>
 
       <ng-container matColumnDef="acoes">

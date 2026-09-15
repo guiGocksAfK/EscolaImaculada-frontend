@@ -44,6 +44,13 @@ export class Turmas {
     return PERIODO_LABEL[t.periodo];
   }
 
+  rotuloResponsavel(t: Turma): string {
+    if (!t.professora) return '—';
+    return t.professora.papel === 'DIRETORA'
+      ? `${t.professora.nome} (diretora)`
+      : t.professora.nome;
+  }
+
   readonly turmas = signal<Turma[]>([]);
   readonly carregando = signal(false);
   readonly carregou = signal(false);

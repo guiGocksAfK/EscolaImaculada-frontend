@@ -20,10 +20,8 @@ import {
   Turma,
   TurmaCreate,
 } from '../../../core/models/turma.model';
-import {
-  ProfessoraResumo,
-  ProfessorasService,
-} from '../../../core/services/professoras.service';
+import { ResponsavelResumo } from '../../../core/models/usuario.model';
+import { ProfessorasService } from '../../../core/services/professoras.service';
 
 export interface TurmaFormData {
   turma?: Turma;
@@ -50,7 +48,7 @@ export class TurmaFormDialog implements OnInit {
 
   readonly periodos = PERIODOS;
   readonly periodoLabel = PERIODO_LABEL;
-  readonly professoras = signal<ProfessoraResumo[]>([]);
+  readonly responsaveis = signal<ResponsavelResumo[]>([]);
   readonly edicao = !!this.data.turma;
 
   readonly form = this.fb.group({
@@ -67,8 +65,8 @@ export class TurmaFormDialog implements OnInit {
 
   ngOnInit(): void {
     this.professorasService
-      .listar()
-      .subscribe((lista) => this.professoras.set(lista));
+      .listarResponsaveis()
+      .subscribe((lista) => this.responsaveis.set(lista));
 
     if (this.data.turma) {
       const { nome, periodo, anoLetivo, professoraId } = this.data.turma;

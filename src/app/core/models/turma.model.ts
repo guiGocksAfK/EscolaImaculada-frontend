@@ -16,7 +16,7 @@ export interface Turma {
   periodo: Periodo;
   anoLetivo: number;
   professoraId: string;
-  professora?: Pick<Usuario, 'id' | 'nome'>;
+  professora?: Pick<Usuario, 'id' | 'nome' | 'papel'>;
   escolaId: string;
 }
 
