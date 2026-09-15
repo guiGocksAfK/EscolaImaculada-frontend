@@ -9,6 +9,17 @@ export interface Usuario {
   escolaId: string;
 }
 
+/**
+ * Opção do seletor de "responsável pela turma" — inclui professoras e
+ * também a(s) diretora(s) da escola, já que uma diretora pode lecionar
+ * além de administrar.
+ */
+export interface ResponsavelResumo {
+  id: string;
+  nome: string;
+  papel: Papel;
+}
+
 /** Professora como aparece na listagem da diretora (sem senha). */
 export interface ProfessoraDetalhe {
   id: string;

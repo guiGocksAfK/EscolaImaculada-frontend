@@ -7,19 +7,20 @@ import {
   ProfessoraCreate,
   ProfessoraDetalhe,
   ProfessoraUpdate,
-  Usuario,
+  ResponsavelResumo,
 } from '../models/usuario.model';
-
-export type ProfessoraResumo = Pick<Usuario, 'id' | 'nome'>;
 
 @Injectable({ providedIn: 'root' })
 export class ProfessorasService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/professoras`;
 
-  /** Lista enxuta para selects (turmas, alunos, avaliações, faltas). */
-  listar(): Observable<ProfessoraResumo[]> {
-    return this.http.get<ProfessoraResumo[]>(this.base);
+  /**
+   * Seletor de "responsável pela turma" — professoras + diretora(s) da
+   * escola (a diretora pode lecionar além de administrar).
+   */
+  listarResponsaveis(): Observable<ResponsavelResumo[]> {
+    return this.http.get<ResponsavelResumo[]>(`${this.base}/responsaveis`);
   }
 
   /** Lista completa para a tela de gestão da diretora. */
