@@ -81,18 +81,22 @@ export class ChamadaDia {
     this.atualizarResumo();
   }
 
-  ehHoje(): boolean {
-    return toISODate(this.data) === toISODate(new Date());
+  ehFuturo(): boolean {
+    return toISODate(this.data) > toISODate(new Date());
   }
 
-  /** Chamada só é editável hoje e enquanto não tiver sido lançada; depois disso é só consulta. */
+  /**
+   * Chamada é editável em qualquer dia até hoje enquanto não tiver sido
+   * lançada (dá pra lançar um dia anterior que ficou pra trás); depois de
+   * lançada, ou num dia que ainda não chegou, é só consulta.
+   */
   somenteLeitura(): boolean {
-    return this.jaLancada() || !this.ehHoje();
+    return this.jaLancada() || this.ehFuturo();
   }
 
-  /** Só mostra a lista quando há o que consultar: chamada já lançada, ou hoje (pra poder lançar). */
+  /** Só mostra a lista quando há o que consultar: chamada já lançada, ou um dia até hoje (pra poder lançar). */
   mostrarRoster(): boolean {
-    return this.jaLancada() || this.ehHoje();
+    return this.jaLancada() || !this.ehFuturo();
   }
 
   diaAnterior(): void {
