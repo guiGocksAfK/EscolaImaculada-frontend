@@ -67,6 +67,8 @@
 }
 
 .roster li:hover {
+  /* Fallback pra navegador sem suporte a color-mix(). */
+  background: rgba(21, 101, 192, 0.04);
   background: color-mix(
     in srgb,
     var(--mat-sys-primary, #1565c0) 4%,

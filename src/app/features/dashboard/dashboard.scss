@@ -10,6 +10,10 @@
   gap: 1.25rem;
   padding: 1.5rem 1.75rem;
   border-radius: 16px;
+  /* Fallback pra navegador sem suporte a color-mix(): se a função dentro do
+     gradiente não é reconhecida, o `background` inteiro é descartado, então
+     o fallback aqui precisa ser uma declaração `background` própria. */
+  background: #ecf3fa;
   background:
     linear-gradient(
       120deg,
@@ -79,7 +83,10 @@
   margin-top: 1rem;
   padding: 0.65rem 1rem;
   border-radius: 12px;
+  /* Fallback pra navegador sem suporte a color-mix(). */
+  background: rgba(21, 101, 192, 0.08);
   background: color-mix(in srgb, var(--mat-sys-primary, #1565c0) 8%, transparent);
+  border: 1px solid rgba(21, 101, 192, 0.25);
   border: 1px solid color-mix(in srgb, var(--mat-sys-primary, #1565c0) 25%, transparent);
   color: inherit;
   text-decoration: none;
@@ -153,6 +160,8 @@
     border-radius: 12px;
     display: grid;
     place-items: center;
+    /* Fallback pra navegador sem suporte a color-mix(). */
+    background: rgba(21, 101, 192, 0.12);
     background: color-mix(
       in srgb,
       var(--mat-sys-primary, #1565c0) 12%,
@@ -192,11 +201,15 @@
 /* Atalho em destaque — sozinho no topo */
 .atalho--destaque {
   padding: 1.25rem 1.35rem;
+  /* Fallback pra navegador sem suporte a color-mix() (o gradiente inteiro
+     seria descartado se a função não fosse reconhecida). */
+  background: #e8f0f9;
   background: linear-gradient(
     120deg,
     color-mix(in srgb, var(--mat-sys-primary, #1565c0) 10%, #fff),
     var(--mat-sys-surface, #fff) 70%
   );
+  border-color: #9cbadc;
   border-color: color-mix(
     in srgb,
     var(--mat-sys-primary, #1565c0) 35%,

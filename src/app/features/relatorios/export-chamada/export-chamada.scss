@@ -21,6 +21,8 @@
 }
 
 .grade thead th {
+  /* Fallback pra navegador sem suporte a color-mix(). */
+  background: #f3f7fc;
   background: color-mix(in srgb, var(--mat-sys-primary, #1565c0) 5%, #fff);
 }
 

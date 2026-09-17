@@ -30,6 +30,8 @@
   margin: 0;
   padding: 0.85rem 1rem;
   border-bottom: 1px solid var(--mat-sys-outline-variant, #e5e7eb);
+  /* Fallback pra navegador sem suporte a color-mix(). */
+  background: rgba(21, 101, 192, 0.04);
   background: color-mix(in srgb, var(--mat-sys-primary, #1565c0) 4%, transparent);
   display: flex;
   flex-wrap: wrap;

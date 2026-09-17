@@ -19,6 +19,8 @@
 }
 
 .grade thead th {
+  /* Fallback pra navegador sem suporte a color-mix(). */
+  background: #f3f7fc;
   background: color-mix(in srgb, var(--mat-sys-primary, #1565c0) 5%, #fff);
 }
 
@@ -75,6 +77,8 @@ thead .col-nome {
 }
 
 thead .hoje {
+  /* Fallback pra navegador sem suporte a color-mix(). */
+  background: #dae6f5;
   background: color-mix(in srgb, var(--mat-sys-primary, #1565c0) 16%, #fff);
 }
 

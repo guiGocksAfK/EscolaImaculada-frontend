@@ -29,7 +29,7 @@
 } @else if (!carregando() && alunos().length === 0) {
   <p class="dica">Nenhum aluno ativo nesta turma.</p>
 } @else if (!carregando() && !mostrarRoster()) {
-  <p class="dica">Não foi realizada nenhuma chamada nesse dia.</p>
+  <p class="dica">Não é possível lançar chamada de um dia que ainda não chegou.</p>
 } @else if (!carregando()) {
   <div class="barra">
     <div class="resumo">
