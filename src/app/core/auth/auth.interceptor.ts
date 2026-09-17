@@ -5,17 +5,8 @@ import {
 } from '@angular/common/http';
 import { catchError, throwError } from 'rxjs';
 
-import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
-
-/** Só anexa o token em chamadas para a nossa API (nunca para terceiros). */
-function ehChamadaDaApi(url: string): boolean {
-  return (
-    url.startsWith(environment.apiUrl) ||
-    url.startsWith('/') ||
-    url.startsWith(`${location.origin}/`)
-  );
-}
+import { ehChamadaDaApi } from '../util/url-api';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);

@@ -67,9 +67,9 @@ export class Login {
 
     this.auth.login({ cpf: cpf.replace(/\D/g, ''), senha }).subscribe({
       next: () => {
-        const redirect =
-          this.route.snapshot.queryParamMap.get('redirect') ?? '/inicio';
-        this.router.navigateByUrl(redirect);
+        this.router.navigateByUrl(
+          this.destinoSeguro(this.route.snapshot.queryParamMap.get('redirect')),
+        );
       },
       error: (err) => {
         this.carregando.set(false);
@@ -80,5 +80,22 @@ export class Login {
         );
       },
     });
+  }
+
+  /**
+   * O `redirect` vem da query string, então quem escreve é o visitante.
+   * Só aceita caminho interno: `//host` e `/\host` o navegador lê como
+   * endereço externo, e o que não começa com `/` pode trazer um esquema
+   * junto (`javascript:`, `https:`). Na dúvida, manda pro início.
+   */
+  private destinoSeguro(redirect: string | null): string {
+    if (!redirect) return '/inicio';
+
+    const externo =
+      !redirect.startsWith('/') ||
+      redirect.startsWith('//') ||
+      redirect.startsWith('/\\');
+
+    return externo ? '/inicio' : redirect;
   }
 }
