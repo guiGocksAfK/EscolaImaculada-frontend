@@ -1,0 +1,17 @@
+# Usado pelo Angular CLI (autoprefixer/postcss) pra decidir quais prefixos de
+# vendor incluir no CSS. Alguns usuários acessam de máquinas/navegadores mais
+# antigos (ex.: Windows 7 com Chrome/Firefox desatualizado), então mantemos
+# uma faixa mais larga do que o padrão do Angular — sem isso o build assume
+# só navegadores bem recentes e não gera os prefixos que esses ainda precisam.
+#
+# Isso NÃO faz o app "funcionar" em qualquer navegador antigo (o Angular não
+# gera mais bundle legado pra IE, por exemplo) — só ajuda o CSS a degradar
+# melhor em evergreen browsers desatualizados.
+
+last 5 Chrome versions
+last 5 Firefox versions
+last 3 Edge versions
+last 3 Safari versions
+Firefox ESR
+not IE 11
+not dead

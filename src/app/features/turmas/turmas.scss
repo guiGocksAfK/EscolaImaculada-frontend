@@ -13,6 +13,8 @@
   font-weight: 600;
   vertical-align: middle;
   color: var(--mat-sys-primary, #1565c0);
+  /* Fallback pra navegador sem suporte a color-mix(). */
+  background: rgba(21, 101, 192, 0.12);
   background: color-mix(in srgb, var(--mat-sys-primary, #1565c0) 12%, transparent);
 }
 

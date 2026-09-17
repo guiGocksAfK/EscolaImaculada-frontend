@@ -118,6 +118,9 @@
 }
 
 .card:hover {
+  /* Fallback pra navegador sem suporte a color-mix() (ex.: Chrome < 111,
+     Firefox < 113) — sem isso o hover fica sem nenhum destaque. */
+  background: rgba(21, 101, 192, 0.04);
   background: color-mix(
     in srgb,
     var(--mat-sys-primary, #1565c0) 4%,

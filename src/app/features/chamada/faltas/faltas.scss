@@ -72,6 +72,8 @@
 }
 
 .card:hover {
+  /* Fallback pra navegador sem suporte a color-mix(). */
+  background: rgba(21, 101, 192, 0.04);
   background: color-mix(
     in srgb,
     var(--mat-sys-primary, #1565c0) 4%,
@@ -88,6 +90,8 @@
   width: 3rem;
   padding: 0.35rem 0;
   border-radius: 10px;
+  /* Fallback pra navegador sem suporte a color-mix(). */
+  background: #ecf3fa;
   background: color-mix(in srgb, var(--mat-sys-primary, #1565c0) 8%, #fff);
   color: var(--mat-sys-primary, #1565c0);
 }
