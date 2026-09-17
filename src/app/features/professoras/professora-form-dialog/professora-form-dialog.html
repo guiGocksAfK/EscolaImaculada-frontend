@@ -47,9 +47,9 @@
       >
         <mat-icon>{{ esconderSenha ? 'visibility' : 'visibility_off' }}</mat-icon>
       </button>
-      <mat-hint>{{ edicao ? 'Deixe em branco para manter a atual.' : 'Mínimo 6 caracteres.' }}</mat-hint>
+      <mat-hint>{{ edicao ? 'Deixe em branco para manter a atual.' : 'Mínimo 10 caracteres.' }}</mat-hint>
       @if (form.controls.senha.touched && form.controls.senha.invalid) {
-        <mat-error>Mínimo 6 caracteres.</mat-error>
+        <mat-error>Mínimo 10 caracteres.</mat-error>
       }
     </mat-form-field>
   </form>
