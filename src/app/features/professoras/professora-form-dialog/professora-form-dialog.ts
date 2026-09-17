@@ -67,8 +67,8 @@ export class ProfessoraFormDialog implements OnInit {
     senha: [
       '',
       this.data.professora
-        ? [Validators.minLength(6)]
-        : [Validators.required, Validators.minLength(6)],
+        ? [Validators.minLength(10)]
+        : [Validators.required, Validators.minLength(10)],
     ],
   });
 

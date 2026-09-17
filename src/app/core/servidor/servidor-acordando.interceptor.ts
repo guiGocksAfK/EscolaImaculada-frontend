@@ -2,17 +2,8 @@ import { inject } from '@angular/core';
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { finalize, retry, throwError, timeout, timer } from 'rxjs';
 
-import { environment } from '../../../environments/environment';
 import { ServidorAcordandoService } from './servidor-acordando.service';
-
-/** Chamada para a nossa própria API (não para terceiros). */
-function ehChamadaDaApi(url: string): boolean {
-  return (
-    url.startsWith(environment.apiUrl) ||
-    url.startsWith('/') ||
-    url.startsWith(`${location.origin}/`)
-  );
-}
+import { ehChamadaDaApi } from '../util/url-api';
 
 /**
  * O erro parece "servidor ainda ligando" (e não uma resposta real da API)?

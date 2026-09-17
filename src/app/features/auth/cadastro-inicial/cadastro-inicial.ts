@@ -61,7 +61,7 @@ export class CadastroInicial {
         dataNascimento: this.fb.control<Date | null>(null, {
           validators: [Validators.required],
         }),
-        senha: ['', [Validators.required, Validators.minLength(6)]],
+        senha: ['', [Validators.required, Validators.minLength(10)]],
         confirmarSenha: ['', [Validators.required]],
       },
       { validators: senhasIguais },
@@ -116,6 +116,10 @@ export class CadastroInicial {
     }
     if (status === 400) {
       return 'Verifique os dados informados e tente novamente.';
+    }
+    if (status === 403) {
+      // Bootstrap é de uso único: a escola desta instalação já foi criada.
+      return 'O cadastro de novas escolas está fechado. Use a tela de login.';
     }
     return 'Não foi possível concluir o cadastro. Tente novamente.';
   }
