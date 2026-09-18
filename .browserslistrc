@@ -1,17 +1,25 @@
-# Usado pelo Angular CLI (autoprefixer/postcss) pra decidir quais prefixos de
-# vendor incluir no CSS. Alguns usuários acessam de máquinas/navegadores mais
-# antigos (ex.: Windows 7 com Chrome/Firefox desatualizado), então mantemos
-# uma faixa mais larga do que o padrão do Angular — sem isso o build assume
-# só navegadores bem recentes e não gera os prefixos que esses ainda precisam.
+# Navegadores que o build precisa atender. O Angular usa esta lista para duas
+# coisas: os prefixos de CSS (autoprefixer) e ATÉ ONDE rebaixar a sintaxe do
+# JavaScript gerado (esbuild). Mirando só navegadores novos, o build pode emitir
+# sintaxe que um navegador antigo nem consegue ler — e aí o sintoma não é
+# layout estranho, é página em branco.
 #
-# Isso NÃO faz o app "funcionar" em qualquer navegador antigo (o Angular não
-# gera mais bundle legado pra IE, por exemplo) — só ajuda o CSS a degradar
-# melhor em evergreen browsers desatualizados.
+# Windows 7: a diretora usa. Nesse sistema o Chrome parou de atualizar no 109
+# (jan/2023) e o Firefox no 115 ESR. As linhas `last N` sozinhas apontam para
+# versões ~40 releases à frente disso, então as duas linhas explícitas abaixo
+# são o que de fato mantém o app funcionando lá. Não remova sem confirmar que
+# ninguém mais acessa de Windows 7.
+#
+# Isto NÃO cria polyfill de API: se o código passar a usar algo que o Chrome
+# 109 não tem (ex.: Array.prototype.toSorted, Object.groupBy), quebra do mesmo
+# jeito. Idem para CSS: color-mix() só existe a partir do 111 e precisa de cor
+# sólida de fallback antes (ver styles.scss).
 
 last 5 Chrome versions
 last 5 Firefox versions
 last 3 Edge versions
 last 3 Safari versions
-Firefox ESR
+Chrome >= 109
+Firefox >= 115
 not IE 11
 not dead
