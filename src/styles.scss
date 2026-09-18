@@ -12,6 +12,14 @@ html {
       color: (
         primary: mat.$azure-palette,
         tertiary: mat.$blue-palette,
+        // Só o tema claro, com cor sólida em cada token. Sem isto o Material
+        // gera `light-dark(claro, escuro)` para todas as cores — função que
+        // só existe a partir do Chrome 123. No Chrome 109 (o último do
+        // Windows 7, que a diretora usa) as cores ficavam inválidas e todo
+        // modal abria transparente, com os campos por cima da página. O app
+        // nunca teve modo escuro (color-scheme: light logo acima), então não
+        // se perde nada.
+        theme-type: light,
       ),
       typography: Roboto,
       density: 0,
