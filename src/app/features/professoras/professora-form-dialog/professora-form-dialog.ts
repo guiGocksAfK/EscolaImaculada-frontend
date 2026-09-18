@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import {
   NonNullableFormBuilder,
   ReactiveFormsModule,
@@ -17,17 +17,12 @@ import { MatIconModule } from '@angular/material/icon';
 
 import { ProfessoraDetalhe } from '../../../core/models/usuario.model';
 import { fromISODate, toISODate } from '../../../core/date/iso-date';
+import { ProfessorasService } from '../../../core/services/professoras.service';
+import { ReautenticacaoService } from '../../../core/auth/reautenticacao.service';
+import { mensagemErroAoSalvar } from '../../../core/util/erro-http';
 
 export interface ProfessoraFormData {
   professora?: ProfessoraDetalhe;
-}
-
-export interface ProfessoraFormResult {
-  nome: string;
-  /** Ausente na edição = mantém o CPF atual. */
-  cpf?: string;
-  dataNascimento?: string;
-  senha?: string;
 }
 
 @Component({
@@ -46,12 +41,15 @@ export interface ProfessoraFormResult {
 })
 export class ProfessoraFormDialog implements OnInit {
   private readonly fb = inject(NonNullableFormBuilder);
-  private readonly ref = inject(
-    MatDialogRef<ProfessoraFormDialog, ProfessoraFormResult>,
-  );
+  private readonly service = inject(ProfessorasService);
+  private readonly reautenticacao = inject(ReautenticacaoService);
+  /** Fecha com `true` só depois que a API confirmou o salvamento. */
+  private readonly ref = inject(MatDialogRef<ProfessoraFormDialog, boolean>);
   protected readonly data = inject<ProfessoraFormData>(MAT_DIALOG_DATA);
 
   readonly edicao = !!this.data.professora;
+  readonly salvando = signal(false);
+  readonly erro = signal<string | null>(null);
   esconderSenha = true;
 
   readonly form = this.fb.group({
@@ -83,18 +81,47 @@ export class ProfessoraFormDialog implements OnInit {
     }
   }
 
+  /**
+   * Salva daqui mesmo e só fecha com a confirmação da API — se falhar (ex.:
+   * CPF já cadastrado), o diálogo continua aberto com tudo preenchido e a
+   * mensagem da API aparece ali mesmo.
+   */
   salvar(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
+    if (this.salvando()) return;
+
     const v = this.form.getRawValue();
     const cpf = v.cpf.replace(/\D/g, '');
-    this.ref.close({
+    const dados = {
       nome: v.nome.trim(),
+      // Ausente na edição = mantém o CPF (e a senha) atuais.
       cpf: cpf ? cpf : undefined,
       dataNascimento: v.dataNascimento ? toISODate(v.dataNascimento) : undefined,
       senha: v.senha ? v.senha : undefined,
-    });
+    };
+    const existente = this.data.professora;
+
+    this.salvando.set(true);
+    this.erro.set(null);
+    this.reautenticacao
+      .executar(() =>
+        existente
+          ? this.service.atualizar(existente.id, dados)
+          : this.service.criar({
+              ...dados,
+              cpf: dados.cpf ?? '',
+              senha: dados.senha ?? '',
+            }),
+      )
+      .subscribe({
+        next: () => this.ref.close(true),
+        error: (err: unknown) => {
+          this.salvando.set(false);
+          this.erro.set(mensagemErroAoSalvar(err));
+        },
+      });
   }
 }

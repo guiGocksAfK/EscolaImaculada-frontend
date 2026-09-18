@@ -1,8 +1,9 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { AuthService } from '../auth/auth.service';
 import { Escola, ResumoEscola } from '../models/escola.model';
 
 /**
@@ -13,11 +14,22 @@ import { Escola, ResumoEscola } from '../models/escola.model';
 @Injectable({ providedIn: 'root' })
 export class EscolaService {
   private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
   private readonly base = `${environment.apiUrl}/escola`;
 
   /** Cache leve pra alimentar o cabeçalho/menu/PDFs sem repetir a chamada. */
   private readonly _dados = signal<Escola | null>(null);
-  readonly dados = this._dados.asReadonly();
+
+  /**
+   * O cache só vale para a escola da sessão atual. Sem essa amarra, sair e
+   * entrar com uma conta de OUTRA escola (sem recarregar a página)
+   * reaproveitava o nome anterior — inclusive no cabeçalho dos PDFs. Com ela,
+   * o cache de outra escola lê como vazio, e o layout busca o certo.
+   */
+  readonly dados = computed(() => {
+    const d = this._dados();
+    return d && d.id === this.auth.usuario()?.escolaId ? d : null;
+  });
 
   /** Nome da escola para a tela de login (endpoint público, sem token). */
   private readonly _nomePublico = signal<string | null>(null);

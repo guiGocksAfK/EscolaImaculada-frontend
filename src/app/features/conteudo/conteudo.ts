@@ -27,7 +27,6 @@ import {
 import {
   ConteudoFormData,
   ConteudoFormDialog,
-  ConteudoFormResult,
 } from './conteudo-form-dialog/conteudo-form-dialog';
 import { camposDoRegistro, linhasParaExibicao } from './campos-conteudo';
 
@@ -262,28 +261,19 @@ export class Conteudo {
       turmaIdInicial: this.filtroTurma,
       dataInicial,
     };
+    // O diálogo salva sozinho e só fecha com `true` depois da confirmação da
+    // API; se falhar, ele continua aberto mostrando o erro, com o texto.
     this.dialog
-      .open(ConteudoFormDialog, { data })
+      .open<ConteudoFormDialog, ConteudoFormData, boolean>(ConteudoFormDialog, { data })
       .afterClosed()
-      .subscribe((res: ConteudoFormResult | undefined) => {
-        if (!res) return;
-        const req = registro
-          ? this.service.atualizar(registro.id, res)
-          : this.service.criar(res);
-        req.subscribe({
-          next: () => {
-            this.snack.open(
-              registro ? 'Registro atualizado.' : 'Conteúdo registrado.',
-              undefined,
-              { duration: 2500 },
-            );
-            this.carregar();
-          },
-          error: () =>
-            this.snack.open('Não foi possível salvar.', undefined, {
-              duration: 3000,
-            }),
-        });
+      .subscribe((salvo) => {
+        if (!salvo) return;
+        this.snack.open(
+          registro ? 'Registro atualizado.' : 'Conteúdo registrado.',
+          undefined,
+          { duration: 2500 },
+        );
+        this.carregar();
       });
   }
 }

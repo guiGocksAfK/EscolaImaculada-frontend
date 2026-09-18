@@ -19,6 +19,9 @@ import { forkJoin } from 'rxjs';
 import { TurmasService } from '../../../../core/services/turmas.service';
 import { AlunosService } from '../../../../core/services/alunos.service';
 import { ChamadaService } from '../../../../core/services/chamada.service';
+import { FaltasJustificadasService } from '../../../../core/services/faltas-justificadas.service';
+import { ReautenticacaoService } from '../../../../core/auth/reautenticacao.service';
+import { mensagemErroAoSalvar } from '../../../../core/util/erro-http';
 import { Turma } from '../../../../core/models/turma.model';
 import { Aluno } from '../../../../core/models/aluno.model';
 import {
@@ -31,8 +34,6 @@ export interface FaltaFormData {
   falta?: FaltaJustificada;
   turmaIdInicial?: string;
 }
-
-export type FaltaFormResult = FaltaJustificadaCreate;
 
 @Component({
   selector: 'app-falta-form-dialog',
@@ -53,13 +54,18 @@ export class FaltaFormDialog implements OnInit {
   private readonly turmasService = inject(TurmasService);
   private readonly alunosService = inject(AlunosService);
   private readonly chamadaService = inject(ChamadaService);
-  private readonly ref = inject(MatDialogRef<FaltaFormDialog, FaltaFormResult>);
+  private readonly service = inject(FaltasJustificadasService);
+  private readonly reautenticacao = inject(ReautenticacaoService);
+  /** Fecha com `true` só depois que a API confirmou o salvamento. */
+  private readonly ref = inject(MatDialogRef<FaltaFormDialog, boolean>);
   private readonly data = inject<FaltaFormData>(MAT_DIALOG_DATA);
 
   readonly turmas = signal<Turma[]>([]);
   readonly alunos = signal<Aluno[]>([]);
   readonly carregandoAlunos = signal(false);
   readonly edicao = !!this.data.falta;
+  readonly salvando = signal(false);
+  readonly erro = signal<string | null>(null);
 
   readonly form = this.fb.group({
     turmaId: ['', [Validators.required]],
@@ -156,16 +162,39 @@ export class FaltaFormDialog implements OnInit {
     });
   }
 
+  /**
+   * Salva daqui mesmo e só fecha com a confirmação da API — se falhar, o
+   * diálogo continua aberto com o motivo escrito (ver avaliação).
+   */
   salvar(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
+    if (this.salvando()) return;
+
     const v = this.form.getRawValue();
-    this.ref.close({
+    const dto: FaltaJustificadaCreate = {
       alunoId: v.alunoId,
       data: toISODate(v.data!),
       motivo: v.motivo.trim(),
-    });
+    };
+    const existente = this.data.falta;
+
+    this.salvando.set(true);
+    this.erro.set(null);
+    this.reautenticacao
+      .executar(() =>
+        existente
+          ? this.service.atualizar(existente.id, dto)
+          : this.service.criar(dto),
+      )
+      .subscribe({
+        next: () => this.ref.close(true),
+        error: (err: unknown) => {
+          this.salvando.set(false);
+          this.erro.set(mensagemErroAoSalvar(err));
+        },
+      });
   }
 }

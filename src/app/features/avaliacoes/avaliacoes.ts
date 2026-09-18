@@ -27,7 +27,6 @@ import {
 import {
   AvaliacaoFormData,
   AvaliacaoFormDialog,
-  AvaliacaoFormResult,
 } from './avaliacao-form-dialog/avaliacao-form-dialog';
 
 interface GrupoReferencia {
@@ -240,28 +239,19 @@ export class Avaliacoes {
       turmaIdInicial: this.filtroTurma,
       alunoIdInicial: alunoId ?? this.filtroAluno,
     };
+    // O diálogo salva sozinho e só fecha com `true` depois da confirmação da
+    // API; se falhar, ele continua aberto mostrando o erro, com o texto.
     this.dialog
-      .open(AvaliacaoFormDialog, { data })
+      .open<AvaliacaoFormDialog, AvaliacaoFormData, boolean>(AvaliacaoFormDialog, { data })
       .afterClosed()
-      .subscribe((res: AvaliacaoFormResult | undefined) => {
-        if (!res) return;
-        const req = avaliacao
-          ? this.service.atualizar(avaliacao.id, res)
-          : this.service.criar(res);
-        req.subscribe({
-          next: () => {
-            this.snack.open(
-              avaliacao ? 'Avaliação atualizada.' : 'Avaliação registrada.',
-              undefined,
-              { duration: 2500 },
-            );
-            this.carregar();
-          },
-          error: () =>
-            this.snack.open('Não foi possível salvar.', undefined, {
-              duration: 3000,
-            }),
-        });
+      .subscribe((salvo) => {
+        if (!salvo) return;
+        this.snack.open(
+          avaliacao ? 'Avaliação atualizada.' : 'Avaliação registrada.',
+          undefined,
+          { duration: 2500 },
+        );
+        this.carregar();
       });
   }
 }
