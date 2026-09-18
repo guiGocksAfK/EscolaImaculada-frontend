@@ -22,7 +22,6 @@ import {
 import { routes } from './app.routes';
 import { BrDateAdapter } from './core/date/br-date-adapter';
 import { authInterceptor } from './core/auth/auth.interceptor';
-import { servidorAcordandoInterceptor } from './core/servidor/servidor-acordando.interceptor';
 
 registerLocaleData(localePt);
 
@@ -34,11 +33,7 @@ export const appConfig: ApplicationConfig = {
       withComponentInputBinding(),
       withViewTransitions({ skipInitialTransition: true }),
     ),
-    provideHttpClient(
-      // ordem: o de "servidor acordando" é o mais externo (envolve o retry
-      // e a contagem de atraso); o de auth só anexa o token.
-      withInterceptors([servidorAcordandoInterceptor, authInterceptor]),
-    ),
+    provideHttpClient(withInterceptors([authInterceptor])),
     provideNativeDateAdapter(),
     { provide: DateAdapter, useClass: BrDateAdapter },
     { provide: LOCALE_ID, useValue: 'pt-BR' },
