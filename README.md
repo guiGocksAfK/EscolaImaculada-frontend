@@ -37,9 +37,6 @@ school's computers are old. A few decisions follow from that:
   return, scoped per user so accounts sharing a device never mix.
 - **Picks the obvious default.** A teacher responsible for a single class
   lands on it directly.
-- **Graceful cold starts.** When the backend takes a while to wake up, the app
-  retries in the background and shows a clear waiting screen instead of
-  failing.
 - **Older browsers.** Wider browser targets and solid-color fallbacks for
   modern CSS keep the interface usable on outdated machines.
 - **Brazilian conventions.** Dates in `dd/mm/yyyy`, CPF (Brazilian taxpayer
@@ -142,7 +139,6 @@ src/app/
 │   ├── models/      domain types
 │   ├── date/        Brazilian date adapter for Angular Material
 │   ├── pdf/         PDF report generation
-│   ├── servidor/    cold-start handling (retry + waiting screen)
 │   └── util/        helpers and per-user preferences
 ├── features/
 │   ├── auth/        login and first-run setup
