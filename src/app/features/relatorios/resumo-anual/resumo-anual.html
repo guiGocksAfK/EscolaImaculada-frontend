@@ -17,14 +17,28 @@
     </mat-select>
   </mat-form-field>
 
+  <mat-form-field class="estreito">
+    <mat-label>Semestre</mat-label>
+    <mat-select [(ngModel)]="semestre">
+      <mat-option [value]="1">1º semestre</mat-option>
+      <mat-option [value]="2">2º semestre</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field class="estreito">
+    <mat-label>Dias letivos</mat-label>
+    <input matInput type="number" min="0" [(ngModel)]="diasLetivos" />
+    <mat-hint>Em branco: dias lançados</mat-hint>
+  </mat-form-field>
+
   <button
     mat-flat-button
     color="primary"
-    (click)="baixarPdf()"
-    [disabled]="!resumo() || resumo()!.linhas.length === 0"
+    (click)="baixarParecer()"
+    [disabled]="!turmaId || gerandoParecer()"
   >
-    <mat-icon>picture_as_pdf</mat-icon>
-    Baixar PDF
+    <mat-icon>description</mat-icon>
+    {{ gerandoParecer() ? 'Gerando…' : 'Gerar parecer' }}
   </button>
 </div>
 

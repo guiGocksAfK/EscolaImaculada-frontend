@@ -82,7 +82,10 @@ export class RegistroSemestral {
         next: async (res) => {
           try {
             await baixarRegistroSemestralPdf({
-              escolaNome: this.escolaService.dados()?.nome ?? 'Escola',
+              escola: {
+                nome: this.escolaService.dados()?.nome ?? 'Escola',
+                endereco: this.escolaService.dados()?.endereco,
+              },
               turmaNome: res.turmaNome,
               semestre: res.semestre,
               ano: res.ano,

@@ -1,23 +1,13 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import {
-  NonNullableFormBuilder,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
-import {
-  MAT_DIALOG_DATA,
-  MatDialogModule,
-  MatDialogRef,
-} from '@angular/material/dialog';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatButtonModule } from '@angular/material/button';
-import { forkJoin } from 'rxjs';
 
 import { TurmasService } from '../../../../core/services/turmas.service';
-import { AlunosService } from '../../../../core/services/alunos.service';
 import { ChamadaService } from '../../../../core/services/chamada.service';
 import { FaltasJustificadasService } from '../../../../core/services/faltas-justificadas.service';
 import { ReautenticacaoService } from '../../../../core/auth/reautenticacao.service';
@@ -52,7 +42,6 @@ export interface FaltaFormData {
 export class FaltaFormDialog implements OnInit {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly turmasService = inject(TurmasService);
-  private readonly alunosService = inject(AlunosService);
   private readonly chamadaService = inject(ChamadaService);
   private readonly service = inject(FaltasJustificadasService);
   private readonly reautenticacao = inject(ReautenticacaoService);
@@ -61,7 +50,7 @@ export class FaltaFormDialog implements OnInit {
   private readonly data = inject<FaltaFormData>(MAT_DIALOG_DATA);
 
   readonly turmas = signal<Turma[]>([]);
-  readonly alunos = signal<Aluno[]>([]);
+  readonly alunos = signal<Array<Pick<Aluno, 'id' | 'nome'>>>([]);
   readonly carregandoAlunos = signal(false);
   readonly edicao = !!this.data.falta;
   readonly salvando = signal(false);
@@ -80,8 +69,7 @@ export class FaltaFormDialog implements OnInit {
     this.turmasService.listar().subscribe((l) => {
       this.turmas.set(l);
       if (!this.edicao && !this.form.value.turmaId) {
-        const inicial =
-          this.data.turmaIdInicial ?? (l.length === 1 ? l[0].id : '');
+        const inicial = this.data.turmaIdInicial ?? (l.length === 1 ? l[0].id : '');
         if (inicial) {
           this.form.patchValue({ turmaId: inicial });
           this.carregarAlunos(inicial);
@@ -91,7 +79,7 @@ export class FaltaFormDialog implements OnInit {
 
     if (this.data.falta) {
       const f = this.data.falta;
-      const turmaId = f.aluno?.turmaId ?? '';
+      const turmaId = f.turmaId ?? f.aluno?.turmaId ?? '';
       this.form.patchValue({
         turmaId,
         alunoId: f.alunoId,
@@ -125,10 +113,8 @@ export class FaltaFormDialog implements OnInit {
     const idCarga = ++this.cargaId;
     const dataVal = this.form.controls.data.value;
     if (!dataVal) {
-      this.alunosService.listar({ turmaId }).subscribe((l) => {
-        if (idCarga !== this.cargaId) return;
-        this.alunos.set(l);
-      });
+      this.alunos.set([]);
+      this.carregandoAlunos.set(false);
       return;
     }
 
@@ -137,22 +123,16 @@ export class FaltaFormDialog implements OnInit {
       if (idCarga === this.cargaId) this.carregandoAlunos.set(false);
     };
     this.carregandoAlunos.set(true);
-    forkJoin({
-      alunos: this.alunosService.listar({ turmaId }),
-      dia: this.chamadaService.getDia(turmaId, iso),
-    }).subscribe({
-      next: ({ alunos, dia }) => {
+    this.chamadaService.getDia(turmaId, iso).subscribe({
+      next: (dia) => {
+        const alunos = dia.alunos ?? [];
         fim();
         if (idCarga !== this.cargaId) return;
         const comFalta = new Set(
-          dia.registros
-            .filter((r) => r.status === 'F')
-            .map((r) => r.alunoId),
+          dia.registros.filter((r) => r.status === 'F').map((r) => r.alunoId),
         );
         const alunoAtualId = this.data.falta?.alunoId;
-        this.alunos.set(
-          alunos.filter((a) => comFalta.has(a.id) || a.id === alunoAtualId),
-        );
+        this.alunos.set(alunos.filter((a) => comFalta.has(a.id) || a.id === alunoAtualId));
       },
       error: () => {
         fim();
@@ -175,6 +155,7 @@ export class FaltaFormDialog implements OnInit {
 
     const v = this.form.getRawValue();
     const dto: FaltaJustificadaCreate = {
+      turmaId: v.turmaId,
       alunoId: v.alunoId,
       data: toISODate(v.data!),
       motivo: v.motivo.trim(),
@@ -185,9 +166,7 @@ export class FaltaFormDialog implements OnInit {
     this.erro.set(null);
     this.reautenticacao
       .executar(() =>
-        existente
-          ? this.service.atualizar(existente.id, dto)
-          : this.service.criar(dto),
+        existente ? this.service.atualizar(existente.id, dto) : this.service.criar(dto),
       )
       .subscribe({
         next: () => this.ref.close(true),

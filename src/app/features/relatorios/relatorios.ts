@@ -18,7 +18,7 @@ import { RegistroSemestral } from './registro-semestral/registro-semestral';
   template: `
     <h1>Relatórios</h1>
     <mat-tab-group appAbasArrastaveis>
-      <mat-tab label="Resumo por aluno">
+      <mat-tab label="Parecer por aluno">
         <app-resumo-anual />
       </mat-tab>
       <mat-tab label="Chamada mensal (PDF)">

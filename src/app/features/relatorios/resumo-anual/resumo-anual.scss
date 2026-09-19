@@ -19,3 +19,10 @@
   line-height: 1.45;
   max-width: 520px;
 }
+
+/* Barra única: turma, ano e as opções do parecer na mesma linha, com o
+   botão no fim. O campo de dias letivos é estreito porque o valor tem três
+   dígitos — dar largura de formulário nele desalinharia a barra. */
+.filtros .estreito {
+  width: 10rem;
+}

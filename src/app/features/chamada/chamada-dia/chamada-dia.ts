@@ -1,6 +1,5 @@
 import { Component, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
@@ -13,19 +12,12 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
-import { AlunosService } from '../../../core/services/alunos.service';
 import { ChamadaService } from '../../../core/services/chamada.service';
 import { Aluno } from '../../../core/models/aluno.model';
-import {
-  STATUS_DIA_LABEL,
-  StatusDia,
-} from '../../../core/models/chamada.model';
+import { STATUS_DIA_LABEL, StatusDia } from '../../../core/models/chamada.model';
 import { toISODate } from '../../../core/date/iso-date';
 import { iniciarCarregamento } from '../../../core/util/carregamento';
-import {
-  ConfirmDialog,
-  ConfirmDialogData,
-} from '../../../shared/confirm-dialog/confirm-dialog';
+import { ConfirmDialog, ConfirmDialogData } from '../../../shared/confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'app-chamada-dia',
@@ -45,7 +37,6 @@ import {
   styleUrl: './chamada-dia.scss',
 })
 export class ChamadaDia {
-  private readonly alunosService = inject(AlunosService);
   private readonly chamadaService = inject(ChamadaService);
   private readonly dialog = inject(MatDialog);
   private readonly snack = inject(MatSnackBar);
@@ -55,7 +46,9 @@ export class ChamadaDia {
 
   readonly turmaId = input<string>('');
 
-  readonly alunos = signal<Aluno[]>([]);
+  readonly alunos = signal<Array<Pick<Aluno, 'id' | 'nome'>>>([]);
+  private cargaId = 0;
+  private encerrarCarga?: () => void;
   readonly carregando = signal(false);
   readonly salvando = signal(false);
   readonly jaLancada = signal(false);
@@ -118,6 +111,8 @@ export class ChamadaDia {
       if (this.turmaId()) {
         this.carregar();
       } else {
+        this.cargaId++;
+        this.encerrarCarga?.();
         this.alunos.set([]);
         this.marcacoes = {};
         this.jaLancada.set(false);
@@ -130,16 +125,20 @@ export class ChamadaDia {
     const turmaId = this.turmaId();
     if (!turmaId) return;
     const iso = toISODate(this.data);
+    const carga = ++this.cargaId;
+    this.alunos.set([]);
+    this.jaLancada.set(false);
+    this.encerrarCarga?.();
     const fim = iniciarCarregamento(this.carregando);
+    this.encerrarCarga = fim;
 
-    forkJoin({
-      alunos: this.alunosService.listar({ turmaId, status: 'ATIVO' }),
-      dia: this.chamadaService.getDia(turmaId, iso),
-    }).subscribe({
-      next: ({ alunos, dia }) => {
+    this.chamadaService.getDia(turmaId, iso).subscribe({
+      next: (dia) => {
+        if (carga !== this.cargaId) return;
+        const alunos = dia.alunos ?? [];
         this.alunos.set(alunos);
         const prev = new Map(dia.registros.map((r) => [r.alunoId, r.status]));
-        this.jaLancada.set(dia.registros.length > 0);
+        this.jaLancada.set(dia.lancada ?? dia.registros.length > 0);
         const m: Record<string, StatusDia> = {};
         for (const a of alunos) m[a.id] = prev.get(a.id) ?? 'C';
         this.marcacoes = m;
@@ -147,6 +146,7 @@ export class ChamadaDia {
         fim();
       },
       error: () => {
+        if (carga !== this.cargaId) return;
         fim();
         this.snack.open('Não foi possível carregar a chamada.', undefined, {
           duration: 3000,

@@ -131,7 +131,10 @@ export class ExportChamada {
         d,
         this.turmaNome,
         this.justificadas(),
-        this.escolaService.dados()?.nome ?? 'Escola',
+        {
+          nome: this.escolaService.dados()?.nome ?? 'Escola',
+          endereco: this.escolaService.dados()?.endereco,
+        },
       );
     } catch {
       this.snack.open('Não foi possível gerar o PDF.', undefined, {
