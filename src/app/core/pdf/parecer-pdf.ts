@@ -58,6 +58,99 @@ export interface ParecerParams {
   alunos: ParecerAluno[];
 }
 
+// ---------------------------------------------------------------------------
+// Montagem a partir das duas fontes da API
+// ---------------------------------------------------------------------------
+
+/** Só o que o parecer usa do registro semestral (evita amarrar ao modelo da API). */
+export interface DadosDoSemestre {
+  turmaNome: string;
+  responsavelNome: string;
+  atendimentos: number;
+  alunos: Array<{ id: string; nome: string; dataNascimento: string }>;
+  avaliacoes: Array<{ alunoId: string; referencia: string; texto: string }>;
+  faltasPorAluno: Record<string, number>;
+}
+
+/** Do cadastro do aluno vem o que o registro semestral não traz. */
+export interface FichaDoAluno {
+  id: string;
+  nomePai?: string;
+  nomeMae?: string;
+  localNascimento?: string;
+}
+
+/**
+ * Junta as duas fontes porque nenhuma tem tudo: o registro semestral traz
+ * faltas e avaliações do período; o cadastro traz filiação e local de
+ * nascimento, que a identificação do formulário exige.
+ */
+export function montarAlunosDoParecer(
+  semestre: 1 | 2,
+  dados: DadosDoSemestre,
+  fichas: FichaDoAluno[],
+  turmaNome?: string,
+): ParecerAluno[] {
+  const porId = new Map(fichas.map((f) => [f.id, f]));
+
+  return dados.alunos
+    .map((aluno) => {
+      const ficha = porId.get(aluno.id);
+      const [municipio, estado] = partirLocal(ficha?.localNascimento);
+      return {
+        nome: aluno.nome,
+        dataNascimento: aluno.dataNascimento,
+        municipio,
+        estado,
+        nomePai: ficha?.nomePai ?? '',
+        nomeMae: ficha?.nomeMae ?? '',
+        turmaNome: turmaNome ?? dados.turmaNome,
+        texto: dados.avaliacoes
+          .filter((a) => a.alunoId === aluno.id && doSemestre(a.referencia, semestre))
+          .map((a) => a.texto.trim())
+          .join('\n\n'),
+        faltas: dados.faltasPorAluno[aluno.id] ?? 0,
+      };
+    })
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+}
+
+/**
+ * Separa "Cascavel - PR", "Curitiba/PR" ou "Toledo, PR" em município e UF.
+ *
+ * O cadastro guarda tudo num campo de texto livre, e na prática cada um
+ * escreve de um jeito. Só considera UF quando o final são mesmo duas letras;
+ * caso contrário o valor inteiro é o município e a UF fica em branco, para a
+ * pessoa completar à mão — melhor isso do que cortar o nome da cidade.
+ */
+export function partirLocal(local?: string): [string, string] {
+  const bruto = (local ?? '').trim();
+  if (!bruto) return ['', ''];
+
+  const separado = bruto.match(/^(.*?)\s*[-/,]\s*([A-Za-zÀ-ú]{2})\.?$/);
+  if (separado) return [separado[1].trim(), separado[2].toUpperCase()];
+  return [bruto, ''];
+}
+
+/**
+ * A avaliação é de qual semestre? A referência é texto livre digitado pela
+ * professora ("1º semestre 2026" é o padrão que o formulário sugere), então
+ * procura o dígito colado no "semestre" e aceita também "primeiro"/"segundo".
+ * Sem nenhuma pista, fica de fora — melhor a caixa vazia do que o texto errado.
+ */
+export function doSemestre(referencia: string, semestre: 1 | 2): boolean {
+  const texto = (referencia ?? '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase();
+
+  const comDigito = texto.match(/(\d)\s*[ºo°.)]*\s*sem/);
+  if (comDigito) return Number(comDigito[1]) === semestre;
+  if (texto.includes('primeiro')) return semestre === 1;
+  if (texto.includes('segundo')) return semestre === 2;
+  return false;
+}
+
 /** Nome do arquivo salvo — também usado pela tela ao baixar. */
 export function nomeArquivoParecer(p: ParecerParams): string {
   const turma = p.alunos[0]?.turmaNome ?? 'turma';

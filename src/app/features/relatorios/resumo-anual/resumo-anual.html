@@ -28,6 +28,33 @@
   </button>
 </div>
 
+<div class="filtros parecer">
+  <span class="rotulo-parecer">Parecer descritivo (uma folha por criança):</span>
+
+  <mat-form-field class="estreito">
+    <mat-label>Semestre</mat-label>
+    <mat-select [(ngModel)]="semestre">
+      <mat-option [value]="1">1º semestre</mat-option>
+      <mat-option [value]="2">2º semestre</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field class="estreito">
+    <mat-label>Dias letivos</mat-label>
+    <input matInput type="number" min="0" [(ngModel)]="diasLetivos" />
+    <mat-hint>Em branco usa os dias com chamada lançada.</mat-hint>
+  </mat-form-field>
+
+  <button
+    mat-stroked-button
+    (click)="baixarParecer()"
+    [disabled]="!turmaId || gerandoParecer()"
+  >
+    <mat-icon>description</mat-icon>
+    {{ gerandoParecer() ? 'Gerando…' : 'Gerar parecer' }}
+  </button>
+</div>
+
 @if (carregando()) {
   <mat-progress-bar mode="indeterminate" />
 }

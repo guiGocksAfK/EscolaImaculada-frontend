@@ -19,3 +19,20 @@
   line-height: 1.45;
   max-width: 520px;
 }
+
+/* Linha do parecer descritivo: fica logo abaixo dos filtros do resumo, mas
+   separada — é outro documento, com semestre e dias letivos próprios. */
+.filtros.parecer {
+  align-items: center;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--mat-sys-outline-variant, #e5e7eb);
+}
+
+.rotulo-parecer {
+  font-size: 0.9rem;
+  color: var(--mat-sys-on-surface-variant, #6b7280);
+}
+
+.filtros.parecer .estreito {
+  width: 9.5rem;
+}
