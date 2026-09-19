@@ -21,7 +21,6 @@ import {
   RelatorioResumo,
   ResumoAluno,
 } from '../../../core/models/relatorio.model';
-import { baixarResumoPdf } from '../../../core/pdf/relatorio-pdf';
 import {
   baixarParecerPdf,
   montarAlunosDoParecer,
@@ -164,17 +163,5 @@ export class ResumoAnual {
         });
       },
     });
-  }
-
-  async baixarPdf(): Promise<void> {
-    const r = this.resumo();
-    if (!r) return;
-    try {
-      await baixarResumoPdf(r, this.escolaService.dados()?.nome ?? 'Escola');
-    } catch {
-      this.snack.open('Não foi possível gerar o PDF.', undefined, {
-        duration: 3000,
-      });
-    }
   }
 }

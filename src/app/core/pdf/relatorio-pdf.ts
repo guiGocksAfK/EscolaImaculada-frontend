@@ -1,6 +1,5 @@
 import type { jsPDF } from 'jspdf';
 
-import { RelatorioResumo } from '../models/relatorio.model';
 import { ChamadaMensal } from '../models/chamada.model';
 
 const FONTE = 'Roboto';
@@ -148,48 +147,6 @@ function baseTabela(
     headStyles: { font: FONTE, fontStyle: 'normal', fillColor: AZUL },
     didDrawPage: () => cabecalho(titulo, subtitulo),
   };
-}
-
-// ---------------------------------------------------------------------------
-// Resumo anual por aluno
-// ---------------------------------------------------------------------------
-
-export async function baixarResumoPdf(
-  resumo: RelatorioResumo,
-  escolaNome: string,
-): Promise<void> {
-  const { jsPDF, autoTable, fonteBase64 } = await carregarLibs();
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-  usarFonteUnicode(doc, fonteBase64);
-
-  const titulo = `Resumo do ano — ${resumo.turmaNome}`;
-  const subtitulo = `Ano letivo ${resumo.ano} · ${resumo.diasLancados} dia(s) de chamada lançados · emitido em ${agora()}`;
-  metadados(doc, titulo, escolaNome);
-  const cabecalho = criarCabecalho(doc, escolaNome);
-  const y = cabecalho(titulo, subtitulo);
-
-  autoTable(doc, {
-    ...baseTabela(doc, cabecalho, titulo, subtitulo, 8),
-    startY: y,
-    head: [['Aluno', 'Pres.', 'Faltas', 'Just.', 'Avaliação descritiva']],
-    body: resumo.linhas.map((l) => [
-      l.alunoNome,
-      String(l.presencas),
-      String(l.faltas),
-      String(l.faltasJustificadas),
-      l.avaliacoes.map((a) => `(${a.referencia}) ${a.texto}`).join('\n\n') || '—',
-    ]),
-    columnStyles: {
-      0: { cellWidth: 38 },
-      1: { cellWidth: 14, halign: 'center' },
-      2: { cellWidth: 14, halign: 'center' },
-      3: { cellWidth: 14, halign: 'center' },
-      4: { cellWidth: 'auto' },
-    },
-  });
-
-  numerarPaginas(doc);
-  doc.save(`resumo-${slug(resumo.turmaNome)}-${resumo.ano}.pdf`);
 }
 
 // ---------------------------------------------------------------------------
