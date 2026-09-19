@@ -19,6 +19,8 @@ export interface RegistroChamada {
 
 /** Chamada de um dia inteiro para uma turma. */
 export interface ChamadaDia {
+  lancada?: boolean;
+  alunos?: Array<{ id: string; nome: string }>;
   turmaId: string;
   data: string;
   registros: Array<Pick<RegistroChamada, 'alunoId' | 'status'>>;

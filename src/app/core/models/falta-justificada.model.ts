@@ -1,6 +1,7 @@
 import { Aluno } from './aluno.model';
 
 export interface FaltaJustificada {
+  turmaId?: string;
   id: string;
   alunoId: string;
   aluno?: Pick<Aluno, 'id' | 'nome' | 'turmaId'>;
