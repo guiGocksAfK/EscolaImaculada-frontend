@@ -30,7 +30,6 @@ import { ExcluirEscolaDialog } from './excluir-escola-dialog/excluir-escola-dial
 import {
   ProfessoraFormData,
   ProfessoraFormDialog,
-  ProfessoraFormResult,
 } from './professora-form-dialog/professora-form-dialog';
 
 @Component({
@@ -230,34 +229,19 @@ export class Professoras {
 
   private abrirForm(professora?: ProfessoraDetalhe): void {
     const data: ProfessoraFormData = { professora };
+    // O diálogo salva sozinho e só fecha com `true` depois da confirmação da
+    // API; se falhar, ele continua aberto mostrando o erro, com os dados.
     this.dialog
-      .open(ProfessoraFormDialog, { data })
+      .open<ProfessoraFormDialog, ProfessoraFormData, boolean>(ProfessoraFormDialog, { data })
       .afterClosed()
-      .subscribe((res: ProfessoraFormResult | undefined) => {
-        if (!res) return;
-        const req = professora
-          ? this.service.atualizar(professora.id, res)
-          : this.service.criar({
-              ...res,
-              cpf: res.cpf ?? '',
-              senha: res.senha ?? '',
-            });
-        req.subscribe({
-          next: () => {
-            this.snack.open(
-              professora ? 'Dados atualizados.' : 'Professora cadastrada.',
-              undefined,
-              { duration: 2500 },
-            );
-            this.carregar();
-          },
-          error: (e) =>
-            this.snack.open(
-              e?.error?.message ?? 'Não foi possível salvar.',
-              undefined,
-              { duration: 3500 },
-            ),
-        });
+      .subscribe((salvo) => {
+        if (!salvo) return;
+        this.snack.open(
+          professora ? 'Dados atualizados.' : 'Professora cadastrada.',
+          undefined,
+          { duration: 2500 },
+        );
+        this.carregar();
       });
   }
 }

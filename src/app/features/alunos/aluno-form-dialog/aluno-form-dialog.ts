@@ -24,16 +24,14 @@ import {
 } from '../../../core/models/aluno.model';
 import { Turma } from '../../../core/models/turma.model';
 import { TurmasService } from '../../../core/services/turmas.service';
+import { AlunosService } from '../../../core/services/alunos.service';
+import { ReautenticacaoService } from '../../../core/auth/reautenticacao.service';
+import { mensagemErroAoSalvar } from '../../../core/util/erro-http';
 
 export interface AlunoFormData {
   aluno?: Aluno;
   /** Turma pré-selecionada ao criar (vindo do filtro da lista). */
   turmaIdInicial?: string;
-}
-
-export interface AlunoFormResult {
-  dados: AlunoCreate;
-  status: StatusAluno;
 }
 
 @Component({
@@ -53,13 +51,18 @@ export interface AlunoFormResult {
 export class AlunoFormDialog implements OnInit {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly turmasService = inject(TurmasService);
-  private readonly ref = inject(MatDialogRef<AlunoFormDialog, AlunoFormResult>);
+  private readonly service = inject(AlunosService);
+  private readonly reautenticacao = inject(ReautenticacaoService);
+  /** Fecha com `true` só depois que a API confirmou o salvamento. */
+  private readonly ref = inject(MatDialogRef<AlunoFormDialog, boolean>);
   protected readonly data = inject<AlunoFormData>(MAT_DIALOG_DATA);
 
   readonly statusOpcoes = STATUS_ALUNO;
   readonly statusLabel = STATUS_ALUNO_LABEL;
   readonly turmas = signal<Turma[]>([]);
   readonly edicao = !!this.data.aluno;
+  readonly salvando = signal(false);
+  readonly erro = signal<string | null>(null);
 
   readonly form = this.fb.group({
     nome: ['', [Validators.required, Validators.maxLength(120)]],
@@ -99,25 +102,45 @@ export class AlunoFormDialog implements OnInit {
     }
   }
 
+  /**
+   * Salva daqui mesmo e só fecha com a confirmação da API — se falhar, o
+   * diálogo continua aberto com tudo preenchido (ver avaliação).
+   */
   salvar(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
+    if (this.salvando()) return;
+
     const v = this.form.getRawValue();
-    this.ref.close({
-      dados: {
-        nome: v.nome.trim(),
-        cpf: v.cpf,
-        dataNascimento: toISO(v.dataNascimento!),
-        nomeMae: v.nomeMae.trim(),
-        nomePai: v.nomePai.trim(),
-        localNascimento: v.localNascimento.trim(),
-        endereco: v.endereco.trim(),
-        turmaId: v.turmaId,
-      },
-      status: v.status,
-    });
+    const dados: AlunoCreate = {
+      nome: v.nome.trim(),
+      cpf: v.cpf,
+      dataNascimento: toISO(v.dataNascimento!),
+      nomeMae: v.nomeMae.trim(),
+      nomePai: v.nomePai.trim(),
+      localNascimento: v.localNascimento.trim(),
+      endereco: v.endereco.trim(),
+      turmaId: v.turmaId,
+    };
+    const existente = this.data.aluno;
+
+    this.salvando.set(true);
+    this.erro.set(null);
+    this.reautenticacao
+      .executar(() =>
+        existente
+          ? this.service.atualizar(existente.id, { ...dados, status: v.status })
+          : this.service.criar(dados),
+      )
+      .subscribe({
+        next: () => this.ref.close(true),
+        error: (err: unknown) => {
+          this.salvando.set(false);
+          this.erro.set(mensagemErroAoSalvar(err));
+        },
+      });
   }
 }
 

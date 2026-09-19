@@ -16,20 +16,18 @@ import { MatButtonModule } from '@angular/material/button';
 
 import { TurmasService } from '../../../core/services/turmas.service';
 import { AlunosService } from '../../../core/services/alunos.service';
+import { AvaliacoesService } from '../../../core/services/avaliacoes.service';
+import { ReautenticacaoService } from '../../../core/auth/reautenticacao.service';
+import { mensagemErroAoSalvar } from '../../../core/util/erro-http';
 import { Turma } from '../../../core/models/turma.model';
 import { Aluno } from '../../../core/models/aluno.model';
-import {
-  Avaliacao,
-  AvaliacaoCreate,
-} from '../../../core/models/avaliacao.model';
+import { Avaliacao } from '../../../core/models/avaliacao.model';
 
 export interface AvaliacaoFormData {
   avaliacao?: Avaliacao;
   turmaIdInicial?: string;
   alunoIdInicial?: string;
 }
-
-export type AvaliacaoFormResult = AvaliacaoCreate;
 
 function referenciaPadrao(): string {
   const hoje = new Date();
@@ -55,14 +53,17 @@ export class AvaliacaoFormDialog implements OnInit {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly turmasService = inject(TurmasService);
   private readonly alunosService = inject(AlunosService);
-  private readonly ref = inject(
-    MatDialogRef<AvaliacaoFormDialog, AvaliacaoFormResult>,
-  );
+  private readonly service = inject(AvaliacoesService);
+  private readonly reautenticacao = inject(ReautenticacaoService);
+  /** Fecha com `true` só depois que a API confirmou o salvamento. */
+  private readonly ref = inject(MatDialogRef<AvaliacaoFormDialog, boolean>);
   private readonly data = inject<AvaliacaoFormData>(MAT_DIALOG_DATA);
 
   readonly turmas = signal<Turma[]>([]);
   readonly alunos = signal<Aluno[]>([]);
   readonly edicao = !!this.data.avaliacao;
+  readonly salvando = signal(false);
+  readonly erro = signal<string | null>(null);
 
   readonly form = this.fb.group({
     turmaId: ['', [Validators.required]],
@@ -109,17 +110,41 @@ export class AvaliacaoFormDialog implements OnInit {
     });
   }
 
+  /**
+   * Salva daqui mesmo e só fecha com a confirmação da API. Antes o diálogo
+   * fechava devolvendo os dados e a tela salvava depois — se a API falhasse,
+   * o texto já tinha sido descartado junto com o diálogo.
+   */
   salvar(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
+    if (this.salvando()) return;
+
     const v = this.form.getRawValue();
-    this.ref.close({
+    const dto = {
       turmaId: v.turmaId,
       alunoId: v.alunoId,
       referencia: v.referencia.trim(),
       texto: v.texto.trim(),
-    });
+    };
+    const existente = this.data.avaliacao;
+
+    this.salvando.set(true);
+    this.erro.set(null);
+    this.reautenticacao
+      .executar(() =>
+        existente
+          ? this.service.atualizar(existente.id, dto)
+          : this.service.criar(dto),
+      )
+      .subscribe({
+        next: () => this.ref.close(true),
+        error: (err: unknown) => {
+          this.salvando.set(false);
+          this.erro.set(mensagemErroAoSalvar(err));
+        },
+      });
   }
 }

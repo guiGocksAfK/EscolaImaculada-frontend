@@ -21,6 +21,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule, MatChipListboxChange } from '@angular/material/chips';
 
 import { TurmasService } from '../../../core/services/turmas.service';
+import { ConteudoService } from '../../../core/services/conteudo.service';
+import { ReautenticacaoService } from '../../../core/auth/reautenticacao.service';
+import { mensagemErroAoSalvar } from '../../../core/util/erro-http';
 import { Turma } from '../../../core/models/turma.model';
 import {
   ConfirmDialog,
@@ -44,8 +47,6 @@ export interface ConteudoFormData {
   turmaIdInicial?: string;
   dataInicial?: string;
 }
-
-export type ConteudoFormResult = RegistroConteudoCreate;
 
 /** Exige que pelo menos um dos campos de conteúdo tenha texto. */
 const pelosMenosUmCampo: ValidatorFn = (
@@ -77,13 +78,16 @@ export class ConteudoFormDialog implements OnInit {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly turmasService = inject(TurmasService);
   private readonly dialog = inject(MatDialog);
-  private readonly ref = inject(
-    MatDialogRef<ConteudoFormDialog, ConteudoFormResult>,
-  );
+  private readonly service = inject(ConteudoService);
+  private readonly reautenticacao = inject(ReautenticacaoService);
+  /** Fecha com `true` só depois que a API confirmou o salvamento. */
+  private readonly ref = inject(MatDialogRef<ConteudoFormDialog, boolean>);
   private readonly data = inject<ConteudoFormData>(MAT_DIALOG_DATA);
 
   readonly turmas = signal<Turma[]>([]);
   readonly edicao = !!this.data.registro;
+  readonly salvando = signal(false);
+  readonly erro = signal<string | null>(null);
   readonly campos = CAMPOS_EXPERIENCIA;
 
   /** Já tem turma definida (veio da tela de origem) — trava o campo pra não confundir. */
@@ -188,11 +192,17 @@ export class ConteudoFormDialog implements OnInit {
     this.selecionados.set(novasChaves);
   }
 
+  /**
+   * Salva daqui mesmo e só fecha com a confirmação da API — se falhar, o
+   * diálogo continua aberto com tudo o que foi escrito (ver avaliação).
+   */
   salvar(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
+    if (this.salvando()) return;
+
     const v = this.form.getRawValue();
     const campos = { ...camposVazios(), ...v };
     if (!camposPreenchidos(campos)) {
@@ -200,7 +210,7 @@ export class ConteudoFormDialog implements OnInit {
       return;
     }
     const soPreenchidos = (t: string) => t.trim() || undefined;
-    this.ref.close({
+    const dto: RegistroConteudoCreate = {
       turmaId: v.turmaId,
       data: toISODate(v.data!),
       disciplina: soPreenchidos(campos.disciplina),
@@ -210,6 +220,23 @@ export class ConteudoFormDialog implements OnInit {
       escutaFala: soPreenchidos(campos.escutaFala),
       espacoTempo: soPreenchidos(campos.espacoTempo),
       outras: soPreenchidos(campos.outras),
-    });
+    };
+    const existente = this.data.registro;
+
+    this.salvando.set(true);
+    this.erro.set(null);
+    this.reautenticacao
+      .executar(() =>
+        existente
+          ? this.service.atualizar(existente.id, dto)
+          : this.service.criar(dto),
+      )
+      .subscribe({
+        next: () => this.ref.close(true),
+        error: (err: unknown) => {
+          this.salvando.set(false);
+          this.erro.set(mensagemErroAoSalvar(err));
+        },
+      });
   }
 }

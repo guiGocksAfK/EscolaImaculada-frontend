@@ -32,7 +32,6 @@ import {
 import {
   AlunoFormData,
   AlunoFormDialog,
-  AlunoFormResult,
 } from './aluno-form-dialog/aluno-form-dialog';
 
 @Component({
@@ -217,31 +216,19 @@ export class Alunos {
       aluno,
       turmaIdInicial: this.filtroTurma || undefined,
     };
+    // O diálogo salva sozinho e só fecha com `true` depois da confirmação da
+    // API; se falhar, ele continua aberto mostrando o erro, com os dados.
     this.dialog
-      .open(AlunoFormDialog, { data })
+      .open<AlunoFormDialog, AlunoFormData, boolean>(AlunoFormDialog, { data })
       .afterClosed()
-      .subscribe((res: AlunoFormResult | undefined) => {
-        if (!res) return;
-        const req = aluno
-          ? this.alunosService.atualizar(aluno.id, {
-              ...res.dados,
-              status: res.status,
-            })
-          : this.alunosService.criar(res.dados);
-        req.subscribe({
-          next: () => {
-            this.snack.open(
-              aluno ? 'Aluno atualizado.' : 'Aluno cadastrado.',
-              undefined,
-              { duration: 2500 },
-            );
-            this.carregar();
-          },
-          error: () =>
-            this.snack.open('Não foi possível salvar.', undefined, {
-              duration: 3000,
-            }),
-        });
+      .subscribe((salvo) => {
+        if (!salvo) return;
+        this.snack.open(
+          aluno ? 'Aluno atualizado.' : 'Aluno cadastrado.',
+          undefined,
+          { duration: 2500 },
+        );
+        this.carregar();
       });
   }
 }

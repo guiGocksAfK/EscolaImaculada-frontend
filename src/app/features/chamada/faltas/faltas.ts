@@ -20,7 +20,6 @@ import {
 import {
   FaltaFormData,
   FaltaFormDialog,
-  FaltaFormResult,
 } from './falta-form-dialog/falta-form-dialog';
 
 const NOMES_MES = [
@@ -169,28 +168,19 @@ export class Faltas {
       falta,
       turmaIdInicial: this.turmaId() || undefined,
     };
+    // O diálogo salva sozinho e só fecha com `true` depois da confirmação da
+    // API; se falhar, ele continua aberto mostrando o erro, com o texto.
     this.dialog
-      .open(FaltaFormDialog, { data })
+      .open<FaltaFormDialog, FaltaFormData, boolean>(FaltaFormDialog, { data })
       .afterClosed()
-      .subscribe((res: FaltaFormResult | undefined) => {
-        if (!res) return;
-        const req = falta
-          ? this.service.atualizar(falta.id, res)
-          : this.service.criar(res);
-        req.subscribe({
-          next: () => {
-            this.snack.open(
-              falta ? 'Justificativa atualizada.' : 'Justificativa registrada.',
-              undefined,
-              { duration: 2500 },
-            );
-            this.carregar();
-          },
-          error: () =>
-            this.snack.open('Não foi possível salvar.', undefined, {
-              duration: 3000,
-            }),
-        });
+      .subscribe((salvo) => {
+        if (!salvo) return;
+        this.snack.open(
+          falta ? 'Justificativa atualizada.' : 'Justificativa registrada.',
+          undefined,
+          { duration: 2500 },
+        );
+        this.carregar();
       });
   }
 }

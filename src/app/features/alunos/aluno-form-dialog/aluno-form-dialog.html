@@ -77,11 +77,14 @@
       </mat-form-field>
     }
   </form>
+  @if (erro()) {
+    <p class="erro" role="alert">{{ erro() }}</p>
+  }
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close>Cancelar</button>
-  <button mat-flat-button color="primary" (click)="salvar()">
-    {{ edicao ? 'Salvar' : 'Cadastrar' }}
+  <button mat-button mat-dialog-close [disabled]="salvando()">Cancelar</button>
+  <button mat-flat-button color="primary" [disabled]="salvando()" (click)="salvar()">
+    {{ salvando() ? 'Salvando…' : edicao ? 'Salvar' : 'Cadastrar' }}
   </button>
 </mat-dialog-actions>
