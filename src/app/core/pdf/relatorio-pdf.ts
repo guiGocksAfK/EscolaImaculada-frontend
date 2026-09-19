@@ -1,49 +1,33 @@
 import type { jsPDF } from 'jspdf';
 
 import { ChamadaMensal } from '../models/chamada.model';
+import {
+  FONTE,
+  Instituicao,
+  MARGEM,
+  criarCabecalho,
+  estiloTabela,
+  metadados,
+  rodape,
+  texto,
+} from './estilo-institucional';
 
-const FONTE = 'Roboto';
-const AZUL: [number, number, number] = [21, 101, 192];
-const MARGEM = { top: 34, left: 14, right: 14, bottom: 16 } as const;
-
-// jspdf + jspdf-autotable + a fonte (224 KB) só entram no bundle quando o
-// usuário realmente gera um PDF.
+// jspdf + jspdf-autotable só entram no bundle quando o usuário gera um PDF.
+// A fonte deixou de ser carregada: o estilo usa a Times, que já vem no jsPDF.
 type AutoTableFn = (doc: jsPDF, options: Record<string, unknown>) => void;
 
 async function carregarLibs(): Promise<{
   jsPDF: typeof jsPDF;
   autoTable: AutoTableFn;
-  fonteBase64: string;
 }> {
-  const [jspdf, autotable, fonte] = await Promise.all([
+  const [jspdf, autotable] = await Promise.all([
     import('jspdf'),
     import('jspdf-autotable'),
-    import('./roboto-font'),
   ]);
   return {
     jsPDF: jspdf.jsPDF,
     autoTable: autotable.default as unknown as AutoTableFn,
-    fonteBase64: fonte.ROBOTO_REGULAR_BASE64,
   };
-}
-
-/**
- * Registra a Roboto (Unicode) no documento. As fontes padrão do jsPDF são
- * Latin-1 e quebram acentos (ã, º, —) — daí o embed da TTF.
- */
-function usarFonteUnicode(doc: jsPDF, fonteBase64: string): void {
-  doc.addFileToVFS('Roboto-Regular.ttf', fonteBase64);
-  doc.addFont('Roboto-Regular.ttf', FONTE, 'normal');
-  doc.setFont(FONTE, 'normal');
-}
-
-function metadados(doc: jsPDF, titulo: string, escolaNome: string): void {
-  doc.setProperties({
-    title: titulo,
-    subject: titulo,
-    author: escolaNome,
-    creator: 'Sistema de Registro de Classe',
-  });
 }
 
 const MESES = [
@@ -61,8 +45,11 @@ const MESES = [
   'Dezembro',
 ];
 
+/** Sem registro na grade. Não usar ponto médio: a fonte interna não desenha. */
+const SEM_REGISTRO = '-';
+
 const LEGENDA_FREQ =
-  'C = compareceu · F = falta · FJ = falta justificada · D = desistente · · = sem registro';
+  'C = compareceu   |   F = falta   |   FJ = falta justificada   |   D = desistente   |   - = sem registro';
 
 const COMBINANTES = /[̀-ͯ]/g;
 
@@ -77,83 +64,25 @@ function slug(s: string): string {
   );
 }
 
-function agora(): string {
-  return new Date().toLocaleString('pt-BR', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  });
-}
-
-/**
- * Desenha o cabeçalho da página atual — no máximo uma vez por página, para
- * poder ser chamado tanto manualmente quanto pelo hook `didDrawPage` do
- * autoTable (que repete em páginas de continuação).
- */
-function criarCabecalho(doc: jsPDF, escolaNome: string) {
-  let ultimaPagina = -1;
-  return (titulo: string, subtitulo: string): number => {
-    const pagina = doc.getNumberOfPages();
-    if (pagina !== ultimaPagina) {
-      ultimaPagina = pagina;
-      doc.setFont(FONTE, 'normal');
-      doc.setTextColor(0);
-      doc.setFontSize(14);
-      doc.text(escolaNome, MARGEM.left, 16);
-      doc.setFontSize(11);
-      doc.text(titulo, MARGEM.left, 24);
-      doc.setFontSize(9);
-      doc.setTextColor(120);
-      doc.text(subtitulo, MARGEM.left, 30);
-      doc.setTextColor(0);
-    }
-    return MARGEM.top + 2;
-  };
-}
-
-/** Carimba "Página X de N" no rodapé de todas as páginas. Chamar por último. */
-function numerarPaginas(doc: jsPDF): void {
-  const total = doc.getNumberOfPages();
-  const w = doc.internal.pageSize.getWidth();
-  const h = doc.internal.pageSize.getHeight();
-  for (let i = 1; i <= total; i++) {
-    doc.setPage(i);
-    doc.setFont(FONTE, 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(120);
-    doc.text(`Página ${i} de ${total}`, w - MARGEM.right, h - 8, {
-      align: 'right',
-    });
-    doc.setTextColor(0);
-  }
-}
-
 function finalY(doc: jsPDF, fallback: number): number {
   const lat = (doc as jsPDF & { lastAutoTable?: { finalY: number } })
     .lastAutoTable;
   return lat?.finalY ?? fallback;
 }
 
-/** Opções comuns a todas as tabelas (estilo + cabeçalho repetido por página). */
-function baseTabela(
-  doc: jsPDF,
-  cabecalho: (t: string, s: string) => number,
-  titulo: string,
-  subtitulo: string,
-  fontSize: number,
-): Record<string, unknown> {
-  return {
-    margin: MARGEM,
-    styles: { font: FONTE, fontStyle: 'normal', fontSize, cellPadding: 2, valign: 'top' },
-    headStyles: { font: FONTE, fontStyle: 'normal', fillColor: AZUL },
-    didDrawPage: () => cabecalho(titulo, subtitulo),
-  };
+/** Aviso no lugar de uma tabela que não tem o que mostrar. */
+function semDados(doc: jsPDF, y: number, mensagem: string): void {
+  doc.setFont(FONTE, 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(0);
+  doc.text(texto(mensagem), MARGEM.left, y + 4);
 }
 
 // ---------------------------------------------------------------------------
 // Grade mensal de chamada
 // ---------------------------------------------------------------------------
 
-/** Desenha uma tabela de frequência de um mês (aluno × dias). */
+/** Tabela de frequência de um mês (aluno × dias), com a legenda embaixo. */
 function tabelaFrequencia(
   doc: jsPDF,
   autoTable: AutoTableFn,
@@ -167,57 +96,54 @@ function tabelaFrequencia(
   const celula = (l: ChamadaMensal['linhas'][number], dia: string): string => {
     const status = l.porDia[dia];
     if (status === 'F' && justificadas.has(`${l.alunoId}|${dia}`)) return 'FJ';
-    return status ?? '·';
+    return status ?? SEM_REGISTRO;
   };
 
+  const estilo = estiloTabela(7);
   autoTable(doc, {
-    ...baseTabela(doc, cabecalho, titulo, subtitulo, 7),
+    ...estilo,
     startY,
-    styles: { font: FONTE, fontStyle: 'normal', fontSize: 7, cellPadding: 1, halign: 'center' },
-    headStyles: { font: FONTE, fontStyle: 'normal', fillColor: AZUL },
+    styles: {
+      ...(estilo['styles'] as object),
+      cellPadding: 1,
+      halign: 'center',
+      valign: 'middle',
+    },
     head: [['Aluno', ...mes.dias.map((d) => d.slice(8, 10)), 'Faltas']],
     body: mes.linhas.map((l) => [
-      l.alunoNome,
+      texto(l.alunoNome),
       ...mes.dias.map((d) => celula(l, d)),
       String(l.totalFaltas),
     ]),
     columnStyles: { 0: { halign: 'left', cellWidth: 45 } },
+    didDrawPage: () => cabecalho(titulo, subtitulo),
   });
 
+  doc.setFont(FONTE, 'normal');
   doc.setFontSize(8);
-  doc.setTextColor(120);
-  doc.text(LEGENDA_FREQ, MARGEM.left, finalY(doc, startY) + 6);
   doc.setTextColor(0);
+  doc.text(LEGENDA_FREQ, MARGEM.left, finalY(doc, startY) + 6);
 }
 
 export async function baixarChamadaMensalPdf(
   dados: ChamadaMensal,
   turmaNome: string,
   justificadas: Set<string> = new Set(),
-  escolaNome = 'Escola',
+  escola: Instituicao = { nome: 'Escola' },
 ): Promise<void> {
-  const { jsPDF, autoTable, fonteBase64 } = await carregarLibs();
+  const { jsPDF, autoTable } = await carregarLibs();
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
-  usarFonteUnicode(doc, fonteBase64);
 
-  const titulo = `Chamada — ${turmaNome}`;
-  const subtitulo = `${MESES[dados.mes - 1]} de ${dados.ano} · emitido em ${agora()}`;
-  metadados(doc, titulo, escolaNome);
-  const cabecalho = criarCabecalho(doc, escolaNome);
+  const titulo = 'Registro de frequência mensal';
+  const subtitulo = `Turma: ${turmaNome}   |   ${MESES[dados.mes - 1]} de ${dados.ano}`;
+  metadados(doc, `${titulo} - ${turmaNome}`, escola);
+
+  const cabecalho = criarCabecalho(doc, escola);
   const y = cabecalho(titulo, subtitulo);
 
-  tabelaFrequencia(
-    doc,
-    autoTable,
-    cabecalho,
-    titulo,
-    subtitulo,
-    dados,
-    justificadas,
-    y,
-  );
+  tabelaFrequencia(doc, autoTable, cabecalho, titulo, subtitulo, dados, justificadas, y);
 
-  numerarPaginas(doc);
+  rodape(doc);
   doc.save(
     `chamada-${slug(turmaNome)}-${dados.ano}-${`${dados.mes}`.padStart(2, '0')}.pdf`,
   );
@@ -235,16 +161,16 @@ function formatarData(iso: string): string {
 function situacaoAluno(a: { status: string }): string {
   if (a.status === 'TRANSFERIDO') return 'Transferido';
   if (a.status === 'DESISTENTE') return 'Desistente';
-  return '';
+  return 'Ativo';
 }
 
 /** Payload já montado e filtrado pelo backend (`/relatorios/registro-semestral`). */
 export interface RegistroSemestralDados {
-  escolaNome: string;
+  escola: Instituicao;
   turmaNome: string;
   semestre: 1 | 2;
   ano: number;
-  /** Um item por mês do semestre — meses sem chamada lançada (dias vazio) são ignorados na grade. */
+  /** Um item por mês do semestre — meses sem chamada lançada são ignorados. */
   meses: ChamadaMensal[];
   alunos: Array<{ id: string; nome: string; status: string }>;
   conteudos: Array<{ data: string; conteudo: string }>;
@@ -263,119 +189,109 @@ export interface RegistroSemestralDados {
 }
 
 /**
- * Registro de classe do semestre: frequência (mês a mês), conteúdo dado,
- * faltas justificadas e um resumo final — tudo num único PDF, no espírito
- * dos diários de classe oficiais que a escola já preenchia à mão.
+ * Registro de classe do semestre: frequência mês a mês, conteúdo dado, faltas
+ * justificadas, avaliações e o resumo final — no espírito do diário de classe
+ * que a escola preenchia à mão.
  */
 export async function baixarRegistroSemestralPdf(
   p: RegistroSemestralDados,
 ): Promise<void> {
-  const { jsPDF, autoTable, fonteBase64 } = await carregarLibs();
+  const { jsPDF, autoTable } = await carregarLibs();
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
-  usarFonteUnicode(doc, fonteBase64);
 
   const periodo = `${p.semestre}º semestre de ${p.ano}`;
-  const emitido = `emitido em ${agora()}`;
-  const tituloDoc = `Registro de classe — ${p.turmaNome} — ${periodo}`;
-  metadados(doc, tituloDoc, p.escolaNome);
+  const identificacao = `Turma: ${p.turmaNome}   |   ${periodo}   |   Prof. regente: ${p.responsavelNome || '-'}`;
+  metadados(doc, `Registro de classe - ${p.turmaNome} - ${periodo}`, p.escola);
 
-  const cabecalho = criarCabecalho(doc, p.escolaNome);
+  const cabecalho = criarCabecalho(doc, p.escola);
   const justificadaChave = new Set(
     p.justificadas.map((f) => `${f.alunoId}|${f.data}`),
   );
-
-  const semTabela = (titulo: string, sub: string, msg: string): void => {
-    const y = cabecalho(titulo, sub);
-    doc.setFontSize(10);
-    doc.setTextColor(120);
-    doc.text(msg, MARGEM.left, y + 4);
-    doc.setTextColor(0);
-  };
 
   // --- Frequência: uma tabela por mês com chamada lançada ---
   const mesesComChamada = p.meses.filter((m) => m.dias.length > 0);
   mesesComChamada.forEach((mes, i) => {
     if (i > 0) doc.addPage();
-    const titulo = `Frequência — ${p.turmaNome}`;
-    const sub = `${MESES[mes.mes - 1]} de ${mes.ano} · ${periodo} · ${emitido}`;
+    const titulo = 'Registro de frequência';
+    const sub = `${identificacao}   |   ${MESES[mes.mes - 1]}`;
     const y = cabecalho(titulo, sub);
     tabelaFrequencia(doc, autoTable, cabecalho, titulo, sub, mes, justificadaChave, y);
   });
   if (mesesComChamada.length === 0) {
-    semTabela(
-      `Frequência — ${p.turmaNome}`,
-      `${periodo} · ${emitido}`,
-      'Nenhuma chamada lançada neste período.',
-    );
+    const y = cabecalho('Registro de frequência', identificacao);
+    semDados(doc, y, 'Nenhuma chamada lançada neste período.');
   }
 
   // --- Conteúdo dado no período ---
   doc.addPage();
-  const tConteudo = `Conteúdo — ${p.turmaNome}`;
-  const sConteudo = `${periodo} · ${emitido}`;
+  const tConteudo = 'Registro de conteúdo';
+  const yConteudo = cabecalho(tConteudo, identificacao);
   if (p.conteudos.length === 0) {
-    semTabela(tConteudo, sConteudo, 'Nenhum registro de conteúdo neste período.');
+    semDados(doc, yConteudo, 'Nenhum registro de conteúdo neste período.');
   } else {
-    const y = cabecalho(tConteudo, sConteudo);
     autoTable(doc, {
-      ...baseTabela(doc, cabecalho, tConteudo, sConteudo, 8),
-      startY: y,
-      head: [['Data', 'Conteúdo', 'Responsável']],
+      ...estiloTabela(8),
+      startY: yConteudo,
+      head: [['Data', 'Conteúdo trabalhado', 'Responsável']],
       body: p.conteudos.map((c) => [
         formatarData(c.data),
-        c.conteudo,
-        p.responsavelNome || '—',
+        texto(c.conteudo),
+        texto(p.responsavelNome || '-'),
       ]),
       columnStyles: {
         0: { cellWidth: 20 },
         1: { cellWidth: 'auto' },
         2: { cellWidth: 40 },
       },
+      didDrawPage: () => cabecalho(tConteudo, identificacao),
     });
   }
 
   // --- Faltas justificadas do período ---
   doc.addPage();
-  const tFaltas = `Faltas justificadas — ${p.turmaNome}`;
-  const sFaltas = `${periodo} · ${emitido}`;
+  const tFaltas = 'Faltas justificadas';
+  const yFaltas = cabecalho(tFaltas, identificacao);
   if (p.justificadas.length === 0) {
-    semTabela(tFaltas, sFaltas, 'Nenhuma falta justificada neste período.');
+    semDados(doc, yFaltas, 'Nenhuma falta justificada neste período.');
   } else {
     const alunoNomePorId = new Map(p.alunos.map((a) => [a.id, a.nome]));
-    const y = cabecalho(tFaltas, sFaltas);
     autoTable(doc, {
-      ...baseTabela(doc, cabecalho, tFaltas, sFaltas, 8),
-      startY: y,
+      ...estiloTabela(8),
+      startY: yFaltas,
       head: [['Data', 'Aluno', 'Motivo']],
       body: p.justificadas.map((f) => [
         formatarData(f.data),
-        f.aluno?.nome ?? alunoNomePorId.get(f.alunoId) ?? '—',
-        f.motivo,
+        texto(f.aluno?.nome ?? alunoNomePorId.get(f.alunoId) ?? '-'),
+        texto(f.motivo),
       ]),
       columnStyles: { 0: { cellWidth: 20 }, 1: { cellWidth: 45 }, 2: { cellWidth: 'auto' } },
+      didDrawPage: () => cabecalho(tFaltas, identificacao),
     });
   }
 
   // --- Avaliações descritivas do período ---
   if (p.avaliacoes.length > 0) {
     doc.addPage();
-    const t = `Avaliações — ${p.turmaNome}`;
-    const s = `${periodo} · ${emitido}`;
-    const y = cabecalho(t, s);
+    const tAval = 'Avaliação descritiva';
+    const yAval = cabecalho(tAval, identificacao);
     autoTable(doc, {
-      ...baseTabela(doc, cabecalho, t, s, 8),
-      startY: y,
-      head: [['Aluno', 'Referência', 'Avaliação descritiva']],
-      body: p.avaliacoes.map((a) => [a.aluno?.nome ?? '—', a.referencia, a.texto]),
+      ...estiloTabela(8),
+      startY: yAval,
+      head: [['Aluno', 'Referência', 'Parecer']],
+      body: p.avaliacoes.map((a) => [
+        texto(a.aluno?.nome ?? '-'),
+        texto(a.referencia),
+        texto(a.texto),
+      ]),
       columnStyles: { 0: { cellWidth: 38 }, 1: { cellWidth: 28 }, 2: { cellWidth: 'auto' } },
+      didDrawPage: () => cabecalho(tAval, identificacao),
     });
   }
 
-  // --- Resumo final ---
+  // --- Resumo final + assinaturas ---
   doc.addPage();
-  const tResumo = `Resumo — ${p.turmaNome}`;
-  const sResumo = `${periodo} · ${emitido}`;
-  const yResumo = cabecalho(tResumo, sResumo);
+  const tResumo = 'Resumo do período';
+  const yResumo = cabecalho(tResumo, identificacao);
   const atendimentos = mesesComChamada.reduce((soma, m) => soma + m.dias.length, 0);
   const faltasPorAluno = new Map<string, number>();
   for (const mes of mesesComChamada) {
@@ -386,24 +302,60 @@ export async function baixarRegistroSemestralPdf(
       );
     }
   }
-  doc.setFontSize(9);
+
+  doc.setFont(FONTE, 'normal');
+  doc.setFontSize(9.5);
+  doc.setTextColor(0);
   doc.text(
-    `Atendimentos (dias letivos lançados no período): ${atendimentos}`,
+    `Dias letivos com chamada lançada no período: ${atendimentos}`,
     MARGEM.left,
     yResumo,
   );
+
   autoTable(doc, {
-    ...baseTabela(doc, cabecalho, tResumo, sResumo, 8),
+    ...estiloTabela(8),
     startY: yResumo + 5,
     head: [['Aluno', 'Situação', 'Faltas no período']],
     body: p.alunos.map((a) => [
-      a.nome,
+      texto(a.nome),
       situacaoAluno(a),
       String(faltasPorAluno.get(a.id) ?? 0),
     ]),
-    columnStyles: { 0: { cellWidth: 60 }, 1: { cellWidth: 30 }, 2: { cellWidth: 30, halign: 'center' } },
+    // A coluna do nome absorve a sobra: com todas as larguras fixas, a tabela
+    // ficava estreita no meio da página em paisagem (e o autoTable ainda
+    // avisava que não sabia o que fazer com o espaço restante).
+    columnStyles: {
+      0: { cellWidth: 'auto' },
+      1: { cellWidth: 40 },
+      2: { cellWidth: 40, halign: 'center' },
+    },
+    didDrawPage: () => cabecalho(tResumo, identificacao),
   });
 
-  numerarPaginas(doc);
+  assinaturas(doc, finalY(doc, yResumo) + 18);
+
+  rodape(doc);
   doc.save(`registro-semestral-${slug(p.turmaNome)}-${p.ano}-${p.semestre}sem.pdf`);
+}
+
+/** Duas linhas de assinatura no fim do registro, como no diário em papel. */
+function assinaturas(doc: jsPDF, y: number): void {
+  const altura = doc.internal.pageSize.getHeight();
+  const largura = doc.internal.pageSize.getWidth();
+  // Sem espaço na página atual: assina na próxima, nunca no pé da tabela.
+  const yFinal = y > altura - MARGEM.bottom - 14 ? (doc.addPage(), MARGEM.top + 10) : y;
+
+  const linha = 70;
+  const esq = MARGEM.left + 15;
+  const dir = largura - MARGEM.right - linha - 15;
+
+  doc.setLineWidth(0.3);
+  doc.line(esq, yFinal, esq + linha, yFinal);
+  doc.line(dir, yFinal, dir + linha, yFinal);
+
+  doc.setFont(FONTE, 'normal');
+  doc.setFontSize(9.5);
+  doc.setTextColor(0);
+  doc.text('PROFESSORA REGENTE', esq + linha / 2, yFinal + 5, { align: 'center' });
+  doc.text('DIRETORA', dir + linha / 2, yFinal + 5, { align: 'center' });
 }

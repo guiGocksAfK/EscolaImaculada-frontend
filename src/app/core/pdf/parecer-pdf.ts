@@ -1,5 +1,7 @@
 import { jsPDF } from 'jspdf';
 
+import { texto } from './estilo-institucional';
+
 /**
  * Parecer descritivo da avaliação da aprendizagem — uma criança por página.
  *
@@ -139,15 +141,15 @@ export function partirLocal(local?: string): [string, string] {
  * Sem nenhuma pista, fica de fora — melhor a caixa vazia do que o texto errado.
  */
 export function doSemestre(referencia: string, semestre: 1 | 2): boolean {
-  const texto = (referencia ?? '')
+  const limpo = (referencia ?? '')
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase();
 
-  const comDigito = texto.match(/(\d)\s*[ºo°.)]*\s*sem/);
+  const comDigito = limpo.match(/(\d)\s*[ºo°.)]*\s*sem/);
   if (comDigito) return Number(comDigito[1]) === semestre;
-  if (texto.includes('primeiro')) return semestre === 1;
-  if (texto.includes('segundo')) return semestre === 2;
+  if (limpo.includes('primeiro')) return semestre === 1;
+  if (limpo.includes('segundo')) return semestre === 2;
   return false;
 }
 
@@ -225,13 +227,13 @@ function desenharTopo(doc: jsPDF, p: ParecerParams, aluno: ParecerAluno): number
 
   doc.setFont(FONTE, 'bold');
   doc.setFontSize(12);
-  doc.text(p.escolaNome.toUpperCase(), centro, y, { align: 'center' });
+  doc.text(texto(p.escolaNome.toUpperCase()), centro, y, { align: 'center' });
 
   doc.setFont(FONTE, 'normal');
   doc.setFontSize(10);
   if (p.escolaEndereco) {
     y += 5;
-    doc.text(p.escolaEndereco, centro, y, { align: 'center' });
+    doc.text(texto(p.escolaEndereco), centro, y, { align: 'center' });
   }
   if (p.escolaTelefone) {
     y += 4.5;
@@ -258,24 +260,24 @@ function desenharTopo(doc: jsPDF, p: ParecerParams, aluno: ParecerAluno): number
 
   y += ALTURA_LINHA_IDENT;
   let x = MARGEM.esq;
-  x = campo(doc, x, y, 'Nome do(a) aluno(a):', aluno.nome.toUpperCase(), UTIL - 62);
+  x = campo(doc, x, y, 'Nome do(a) aluno(a):', texto(aluno.nome.toUpperCase()), UTIL - 62);
   campo(doc, x, y, 'Sexo:', '', 0);
   doc.text('Masc.(    ) Fem.(    )', x + doc.getTextWidth('Sexo: '), y);
 
   y += ALTURA_LINHA_IDENT;
   x = MARGEM.esq;
   x = campo(doc, x, y, 'Data de nascimento:', formatarData(aluno.dataNascimento), 34);
-  x = campo(doc, x + 6, y, 'Município:', aluno.municipio, 40);
+  x = campo(doc, x + 6, y, 'Município:', texto(aluno.municipio), 40);
   campo(doc, x + 4, y, 'Estado:', aluno.estado, 18);
 
   y += ALTURA_LINHA_IDENT;
   x = MARGEM.esq;
-  x = campo(doc, x, y, 'Filiação: Pai:', aluno.nomePai, 52);
-  x = campo(doc, x + 3, y, 'Mãe:', aluno.nomeMae, 58);
+  x = campo(doc, x, y, 'Filiação: Pai:', texto(aluno.nomePai), 52);
+  x = campo(doc, x + 3, y, 'Mãe:', texto(aluno.nomeMae), 58);
   campo(doc, x + 3, y, 'Turma:', aluno.turmaNome, MARGEM.esq + UTIL - x - 3 - doc.getTextWidth('Turma: '));
 
   y += ALTURA_LINHA_IDENT;
-  campo(doc, MARGEM.esq, y, 'Prof. Regente:', p.professoraNome, UTIL - doc.getTextWidth('Prof. Regente: '));
+  campo(doc, MARGEM.esq, y, 'Prof. Regente:', texto(p.professoraNome), UTIL - doc.getTextWidth('Prof. Regente: '));
 
   y += ALTURA_LINHA_IDENT;
   doc.setFont(FONTE, 'bold');
@@ -300,7 +302,7 @@ function desenharTopoContinuacao(doc: jsPDF, p: ParecerParams, aluno: ParecerAlu
   doc.setFont(FONTE, 'normal');
   doc.setFontSize(10);
   doc.text(
-    `${aluno.nome.toUpperCase()} - ${p.semestre}º semestre ${p.ano} (continuação)`,
+    texto(`${aluno.nome.toUpperCase()} - ${p.semestre}º semestre ${p.ano} (continuação)`),
     centro,
     MARGEM.topo + 10,
     { align: 'center' },
@@ -360,12 +362,12 @@ interface PaginaDeTexto {
  */
 function repartirTexto(
   doc: jsPDF,
-  texto: string,
+  bruto: string,
   topoPrimeira: number,
   baseUltima: number,
   baseCheia: number,
 ): PaginaDeTexto[] {
-  const conteudo = (texto ?? '').trim();
+  const conteudo = texto(bruto ?? '').trim();
   if (!conteudo) return [{ linhas: [], corpo: CORPOS_AVALIACAO[0] }];
 
   const larguraTexto = UTIL - RESPIRO_CAIXA * 2;
